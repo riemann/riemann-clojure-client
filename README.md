@@ -1,6 +1,6 @@
 # riemann-clojure-client
 
-A clojure client for (Riemann)[http://aphyr.github.com/riemann]
+A clojure client for [Riemann](http://aphyr.github.com/riemann)
 
 ## Usage
 
