@@ -11,6 +11,8 @@ For riemann-java-client, add the boundary repo to your project.clj:
 }
 ```
 
+Then grab the dependency from [Clojars](https://clojars.org/riemann-clojure-client).
+
 ``` clojure
 (use 'riemann.client)
 (def c (tcp-client :host "1.2.3.4"))
