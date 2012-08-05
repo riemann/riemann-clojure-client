@@ -24,12 +24,12 @@
            [java.io IOException])
   (:use clojure.tools.logging))
 
-(defn unix-time
+(defn- unix-time
     "The current unix epoch time in seconds, taken from System/currentTimeMillis."
     []
     (/ (System/currentTimeMillis) 1000))
 
-(defn decode-pb-event
+(defn- decode-pb-event
   "Transforms a java protobuf Event to a map."
   [^com.aphyr.riemann.Proto$Event e]
   (let [rough
