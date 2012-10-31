@@ -22,26 +22,8 @@
                                      AbstractRiemannClient]
            [java.net InetSocketAddress]
            [java.io IOException])
+  (:use riemann.codec)
   (:use clojure.tools.logging))
-
-(defn- unix-time
-    "The current unix epoch time in seconds, taken from System/currentTimeMillis."
-    []
-    (/ (System/currentTimeMillis) 1000))
-
-(defn- decode-pb-event
-  "Transforms a java protobuf Event to a map."
-  [^com.aphyr.riemann.Proto$Event e]
-  (let [rough
-        {:host (when (.hasHost e) (.getHost e))
-         :service (when (.hasService e) (.getService e))
-         :state (when (.hasState e) (.getState e))
-         :description (when (.hasDescription e) (.getDescription e))
-         :metric (when (.hasMetricF e) (.getMetricF e))
-         :tags (when (< 0 (.getTagsCount e)) (vec (.getTagsList e)))
-         :time (if (.hasTime e) (.getTime e) (unix-time))
-         :ttl (when (.hasTtl e) (.getTtl e))}]
-    (select-keys rough (for [[k v] rough :when (not= nil v)] k))))
 
 (defn query
   "Query the server for events in the index. Returns a list of events."
