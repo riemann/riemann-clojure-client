@@ -35,19 +35,11 @@
   ([client event]
    (send-event client event true))
   ([^AbstractRiemannClient client event ack]
-   (let [e (.event client)]
-     (.host e (:host event))
-     (when-let [s (:service event)] (.service e s))
-     (when-let [s (:state event)] (.state e s))
-     (when-let [d (:description event)] (.description e d))
-     (when-let [m (:metric event)] (.metric e (float m)))
-     (when-let [^java.util.List t (:tags event)] (.tags e t))
-     (when-let [t (:time event)] (.time e (long t)))
-     (when-let [t (:ttl event)] (.ttl e (float t)))
-
+   (let [events (into-array com.aphyr.riemann.Proto$Event
+                            (list (encode-pb-event event)))]
      (if ack
-       (.sendWithAck e)
-       (.send e)))))
+       (.sendEventsWithAck client events)
+       (.sendEvents client events)))))
 
 (defn tcp-client 
   "Create a new TCP client. Example:

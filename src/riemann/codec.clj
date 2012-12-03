@@ -1,8 +1,8 @@
 (ns riemann.codec
   "Encodes and decodes Riemann messages and events, between byte arrays,
   buffers, and in-memory types."
-
-  (:import [com.aphyr.riemann Proto$Query Proto$Event Proto$Msg]))
+  (:import [com.aphyr.riemann Proto$Query Proto$Event Proto$Msg]
+           [com.google.protobuf ByteString]))
 
 (defrecord Query [string])
 (defrecord Event [host service state description metric tags time ttl])
@@ -28,7 +28,11 @@
     (when (.hasService e) (.getService e))
     (when (.hasState e) (.getState e))
     (when (.hasDescription e) (.getDescription e))
-    (when (.hasMetricF e) (.getMetricF e))
+    (cond
+      (.hasMetricF e)      (.getMetricF e)
+      (.hasMetricD e)      (.getMetricD e)
+      (.hasMetricSint64 e) (.getMetricSint64 e)
+      (.hasMetricBigint e) (-> e (.getMetricBigint) (.toByteArray) (bigint)))
     (when (< 0 (.getTagsCount e)) (vec (.getTagsList e)))
     (when (.hasTime e) (.getTime e))
     (when (.hasTtl e) (.getTtl e))))
@@ -41,7 +45,25 @@
     (when (:service e)      (.setService      event (:service e)))
     (when (:state e)        (.setState        event (:state e)))
     (when (:description e)  (.setDescription  event (:description e)))
-    (when (:metric e)       (.setMetricF      event (float (:metric e))))
+    (when-let [m (:metric e)]
+      (cond
+        (instance? Double m)  (.setMetricD event m)
+        (instance? Float m)   (.setMetricF event m)
+        (ratio? m)            (.setMetricD event (double m))
+
+        (instance? clojure.lang.BigInt m)
+          ; LMAO if a lack of immutability means mandatory defensive copies
+          ; at every layer
+          (.setMetricBigint event (ByteString/copyFrom
+                                    (.toByteArray
+                                      (.toBigInteger m))))
+
+        (instance? java.math.BigInteger m)
+          (.setMetricBigint event (ByteString/copyFrom (.toByteArray m)))
+        
+        (integer? m)          (.setMetricSint64 event (long m))
+        true (throw (RuntimeException. 
+                      (str "Unknown metric type" (class m))))))
     (when (:tags e)         (.addAllTags      event (:tags e)))
     (when (:time e)         (.setTime         event (long (:time e))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
