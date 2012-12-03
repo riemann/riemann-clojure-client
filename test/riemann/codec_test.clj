@@ -41,14 +41,11 @@
                 {:events [{:metric Long/MIN_VALUE}]}
                 {:events [{:metric 0}]}
                 {:events [{:metric Long/MAX_VALUE}]}
-                ; Bigints
-                {:events [{:metric (* (bigint Long/MIN_VALUE) Long/MAX_VALUE)}]}
-                {:events [{:metric (* (bigint Long/MAX_VALUE) Long/MAX_VALUE)}]}
                 ; Doubles
                 {:events [{:metric 55555555.5555555555}]}
                 {:events [{:metric Double/MIN_VALUE}]}
                 {:events [{:metric Double/MAX_VALUE}]}
-                ; Floas
+                ; Floats
                 {:events [{:metric (float 5555555.555555555)}]}
                 {:events [{:metric Float/MIN_VALUE}]}
                 {:events [{:metric Float/MAX_VALUE}]}

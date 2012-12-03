@@ -29,10 +29,9 @@
     (when (.hasState e) (.getState e))
     (when (.hasDescription e) (.getDescription e))
     (cond
-      (.hasMetricF e)      (.getMetricF e)
-      (.hasMetricD e)      (.getMetricD e)
       (.hasMetricSint64 e) (.getMetricSint64 e)
-      (.hasMetricBigint e) (-> e (.getMetricBigint) (.toByteArray) (bigint)))
+      (.hasMetricD e)      (.getMetricD e)
+      (.hasMetricF e)      (.getMetricF e))
     (when (< 0 (.getTagsCount e)) (vec (.getTagsList e)))
     (when (.hasTime e) (.getTime e))
     (when (.hasTtl e) (.getTtl e))))
@@ -46,24 +45,11 @@
     (when (:state e)        (.setState        event (:state e)))
     (when (:description e)  (.setDescription  event (:description e)))
     (when-let [m (:metric e)]
-      (cond
-        (instance? Double m)  (.setMetricD event m)
-        (instance? Float m)   (.setMetricF event m)
-        (ratio? m)            (.setMetricD event (double m))
-
-        (instance? clojure.lang.BigInt m)
-          ; LMAO if a lack of immutability means mandatory defensive copies
-          ; at every layer
-          (.setMetricBigint event (ByteString/copyFrom
-                                    (.toByteArray
-                                      (.toBigInteger m))))
-
-        (instance? java.math.BigInteger m)
-          (.setMetricBigint event (ByteString/copyFrom (.toByteArray m)))
-        
-        (integer? m)          (.setMetricSint64 event (long m))
-        true (throw (RuntimeException. 
-                      (str "Unknown metric type" (class m))))))
+      ; For backwards compatibility, always construct floats.
+      (try (.setMetricF event (float m)) (catch Throwable _))
+      (if (and (integer? m) (<= Long/MIN_VALUE m Long/MAX_VALUE))
+        (.setMetricSint64 event (long m))
+        (.setMetricD event (double m))))
     (when (:tags e)         (.addAllTags      event (:tags e)))
     (when (:time e)         (.setTime         event (long (:time e))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
