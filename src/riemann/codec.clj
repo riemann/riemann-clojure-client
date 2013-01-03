@@ -1,7 +1,7 @@
 (ns riemann.codec
   "Encodes and decodes Riemann messages and events, between byte arrays,
   buffers, and in-memory types."
-  (:import [com.aphyr.riemann Proto$Query Proto$Event Proto$Msg]
+  (:import [com.aphyr.riemann Proto$Query Proto$Attribute Proto$Event Proto$Msg]
            [com.google.protobuf ByteString]))
 
 (defrecord Query [string])
@@ -20,7 +20,7 @@
        (.setString (:string query))
        (.build))))
 
-(defn decode-pb-event
+(defn decode-pb-event-record
   "Transforms a java protobuf to an Event."
   [^Proto$Event e]
   (Event.
@@ -35,6 +35,13 @@
     (when (< 0 (.getTagsCount e)) (vec (.getTagsList e)))
     (when (.hasTime e) (.getTime e))
     (when (.hasTtl e) (.getTtl e))))
+
+(defn decode-pb-event
+  [^Proto$Event e]
+  (let [event (decode-pb-event-record e)]
+    (when (< 0 (.getAttributesCount e))
+      (into event (map (fn [a] [(keyword (.getName a)) (.getValue a)]) (.getAttributesList e))))
+    event))
 
 (defn encode-pb-event
   "Transforms a map to a java protobuf Event."
@@ -53,6 +60,10 @@
     (when (:tags e)         (.addAllTags      event (:tags e)))
     (when (:time e)         (.setTime         event (long (:time e))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
+    (when (instance? Event e)
+      (dorun
+       (for [[k v] (.__extmap e)]
+         (.addAttributes event (name k) v))))
     (.build event)))
 
 (defn decode-pb-msg

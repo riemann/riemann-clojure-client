@@ -56,6 +56,14 @@
                            :metric (float 1.8)
                            :tags ["a" "b" "c"]
                            :time 12345
+                           :ttl (float 10)}]}
+                {:events [{:host "a"
+                           :service "b"
+                           :state "c"
+                           :description "yo"
+                           :metric (float 1.8)
+                           :attributes {"key1" "value1" "key2" "value2"}
+                           :time 12345
                            :ttl (float 10)}]})
 
            (let [m (msg {:events [{:host "a"
