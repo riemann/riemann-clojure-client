@@ -6,7 +6,7 @@
            [com.google.protobuf ByteString]))
 
 (defrecord Query [string])
-(defrecord Event [host service state description metric tags time ttl ])
+(defrecord Event [host service state description metric tags time ttl])
 (defrecord Msg [ok error events query])
 
 (def event-keys (set (map keyword (Event/getBasis))))
