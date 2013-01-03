@@ -62,7 +62,8 @@
                            :state "c"
                            :description "yo"
                            :metric (float 1.8)
-                           :attributes {"key1" "value1" "key2" "value2"}
+                           :key1 "value1"
+                           :key2 "value2"
                            :time 12345
                            :ttl (float 10)}]})
 

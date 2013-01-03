@@ -1,12 +1,15 @@
 (ns riemann.codec
   "Encodes and decodes Riemann messages and events, between byte arrays,
   buffers, and in-memory types."
+  (:require [clojure.set])
   (:import [com.aphyr.riemann Proto$Query Proto$Attribute Proto$Event Proto$Msg]
            [com.google.protobuf ByteString]))
 
 (defrecord Query [string])
-(defrecord Event [host service state description metric tags time ttl])
+(defrecord Event [host service state description metric tags time ttl ])
 (defrecord Msg [ok error events query])
+
+(def event-keys (set (map keyword (Event/getBasis))))
 
 (defn decode-pb-query
   "Transforms a java protobuf Query to a Query."
@@ -39,9 +42,9 @@
 (defn decode-pb-event
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
-    (when (< 0 (.getAttributesCount e))
-      (into event (map (fn [a] [(keyword (.getName a)) (.getValue a)]) (.getAttributesList e))))
-    event))
+    (if (< 0 (.getAttributesCount e))
+      (into event (map (fn [a] [(keyword (.getName a)) (.getValue a)]) (.getAttributesList e)))
+      event)))
 
 (defn encode-pb-event
   "Transforms a map to a java protobuf Event."
@@ -60,10 +63,12 @@
     (when (:tags e)         (.addAllTags      event (:tags e)))
     (when (:time e)         (.setTime         event (long (:time e))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
-    (when (instance? Event e)
-      (dorun
-       (for [[k v] (.__extmap e)]
-         (.addAttributes event (name k) v))))
+    (dorun
+     (for [k (clojure.set/difference (set (keys e)) event-keys)]
+       (let [a (Proto$Attribute/newBuilder)]
+         (.setName a (name k))
+         (.setValue a (get e k))
+         (.addAttributes event a))))
     (.build event)))
 
 (defn decode-pb-msg
