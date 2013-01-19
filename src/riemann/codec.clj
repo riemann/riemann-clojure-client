@@ -43,7 +43,7 @@
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
     (if (< 0 (.getAttributesCount e))
-      (into event (map (fn [a] [(keyword (.getName a)) (.getValue a)]) (.getAttributesList e)))
+      (into event (map (fn [a] [(keyword (.getKey a)) (.getValue a)]) (.getAttributesList e)))
       event)))
 
 (defn encode-pb-event
@@ -66,7 +66,7 @@
     (dorun
      (for [k (clojure.set/difference (set (keys e)) event-keys)]
        (let [a (Proto$Attribute/newBuilder)]
-         (.setName a (name k))
+         (.setKey a (name k))
          (.setValue a (get e k))
          (.addAttributes event a))))
     (.build event)))
