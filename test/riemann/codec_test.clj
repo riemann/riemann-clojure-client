@@ -57,6 +57,7 @@
                            :tags ["a" "b" "c"]
                            :time 12345
                            :ttl (float 10)}]}
+                ; Custom attributes
                 {:events [{:host "a"
                            :service "b"
                            :state "c"

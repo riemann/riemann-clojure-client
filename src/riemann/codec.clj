@@ -43,7 +43,9 @@
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
     (if (< 0 (.getAttributesCount e))
-      (into event (map (fn [a] [(keyword (.getKey a)) (.getValue a)]) (.getAttributesList e)))
+      (into event (map (fn [a] 
+                         [(keyword (.getKey a)) (.getValue a)]) 
+                       (.getAttributesList e)))
       event)))
 
 (defn encode-pb-event
