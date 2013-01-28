@@ -17,7 +17,9 @@
   dropped connection once before giving up. They're backed by a
   RiemannRetryingTcpClient."
 
-  (:import [com.aphyr.riemann.client RiemannRetryingTcpClient 
+  (:import [com.aphyr.riemann.client RiemannThreadedClient
+                                     RiemannRetryingTcpClient
+                                     RiemannTcpClient 
                                      RiemannUDPClient 
                                      AbstractRiemannClient]
            [java.net InetSocketAddress]
@@ -41,7 +43,20 @@
        (.sendEventsWithAck client events)
        (.sendEvents client events)))))
 
-(defn tcp-client 
+(defn tcp-client
+  "Creates a new threaded TCP client. Example:
+
+  (tcp-client)
+  (tcp-client :host \"foo\" :port 5555)"
+  [& { :keys [^String host ^Integer port]
+       :or {port 5555
+            host "localhost"}
+       :as opts}]
+  (doto (RiemannThreadedClient.
+          (RiemannTcpClient. (InetSocketAddress. host port)))
+    (.connect)))
+
+(defn retrying-tcp-client
   "Create a new TCP client. Example:
 
   (tcp-client)
