@@ -43,7 +43,7 @@
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
     (if (< 0 (.getAttributesCount e))
-      (into event (map (fn [a] 
+      (into event (map (fn [^Proto$Attribute a] 
                          [(keyword (.getKey a)) (.getValue a)]) 
                        (.getAttributesList e)))
       event)))

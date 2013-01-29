@@ -23,8 +23,9 @@
                                      RiemannTcpClient 
                                      RiemannUDPClient 
                                      AbstractRiemannClient)
-           [java.net InetSocketAddress]
-           [java.io IOException])
+           (java.util List)
+           (java.net InetSocketAddress)
+           (java.io IOException))
   (:use riemann.codec)
   (:use clojure.tools.logging))
 
@@ -38,7 +39,7 @@
   ([client events]
    (send-events client events true))
   ([^AbstractRiemannClient client events ack]
-   (let [events (map encode-pb-event events)]
+   (let [^List events (map encode-pb-event events)]
      (if ack
        (.sendEventsWithAck client events)
        (.sendEvents client events)))))
@@ -62,7 +63,7 @@
 
 (defn reconnect-client
   "Reconnect a client."
-  [client]
+  [^AbstractRiemannClient client]
   (.reconnect client))
 
 (defn batch
@@ -117,11 +118,14 @@
   (let [clients (vec clients)
         i       (atom 0)
         n       (count clients)
-        c       (fn next-client [] (clients (swap! i #(mod (inc %) n))))]
+        c       (fn next-client [] 
+                  (clients (swap! i #(mod (inc %) n))))]
     (proxy [AbstractRiemannClient] []
 ;      (sendMessage [this msg] (throw))
 ;      (recvMessage [this] (throw))
-      (sendRecvMessage [msg] (.sendRecvMessage (c) msg))
-      (sendMaybeRecvMessage [msg] (.sendMaybeRecvMessage (c) msg))
+      (sendRecvMessage [msg] (.sendRecvMessage 
+                               ^AbstractRiemannClient (c) msg))
+      (sendMaybeRecvMessage [msg] (.sendMaybeRecvMessage 
+                                    ^AbstractRiemannClient (c) msg))
       (connect [] (doseq [client clients] (.connect client)))
       (disconnect [] (doseq [client clients] (.disconnect client))))))
