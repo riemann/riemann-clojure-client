@@ -65,12 +65,11 @@
     (when (:tags e)         (.addAllTags      event (:tags e)))
     (when (:time e)         (.setTime         event (long (:time e))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
-    (dorun
-     (for [k (clojure.set/difference (set (keys e)) event-keys)]
-       (let [a (Proto$Attribute/newBuilder)]
-         (.setKey a (name k))
-         (.setValue a (get e k))
-         (.addAttributes event a))))
+    (doseq [k (clojure.set/difference (set (keys e)) event-keys)]
+      (let [a (Proto$Attribute/newBuilder)]
+        (.setKey a (name k))
+        (.setValue a (get e k))
+        (.addAttributes event a)))
     (.build event)))
 
 (defn decode-pb-msg
