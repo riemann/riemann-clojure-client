@@ -89,8 +89,8 @@
 (defn retrying-tcp-client
   "Create a new TCP client. Example:
 
-  (tcp-client)
-  (tcp-client :host \"foo\" :port 5555)"
+  (retrying-tcp-client)
+  (retrying-tcp-client :host \"foo\" :port 5555)"
   [& { :keys [^String host ^Integer port]
        :or {port 5555
             host "localhost"}
