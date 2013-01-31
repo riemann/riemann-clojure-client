@@ -116,10 +116,9 @@
   "Creates a new multiclient from n clients"
   [clients]
   (let [clients (vec clients)
-        i       (atom 0)
         n       (count clients)
-        c       (fn next-client [] 
-                  (clients (swap! i #(mod (inc %) n))))]
+        c       (fn choose-client []
+                  (clients (mod (.getId (Thread/currentThread)) n)))]
     (proxy [AbstractRiemannClient] []
 ;      (sendMessage [this msg] (throw))
 ;      (recvMessage [this] (throw))
