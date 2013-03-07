@@ -17,11 +17,8 @@
   dropped connection once before giving up. They're backed by a
   RiemannRetryingTcpClient."
 
-  (:import (com.aphyr.riemann.client RiemannThreadedClient
-                                     RiemannRetryingTcpClient
-                                     RiemannBatchClient
-                                     RiemannTcpClient 
-                                     RiemannUDPClient 
+  (:import (com.aphyr.riemann.client RiemannBatchClient
+                                     RiemannClient 
                                      AbstractRiemannClient)
            (java.util List)
            (java.net InetSocketAddress)
@@ -72,8 +69,8 @@
   ([n ^AbstractRiemannClient client]
    (RiemannBatchClient. n client)))
 
-(defn threaded-tcp-client
-  "Creates a new threaded TCP client. Example:
+(defn tcp-client
+  "Creates a new TCP client. Example:
 
   (threaded-tcp-client)
   (threaded-tcp-client :host \"foo\" :port 5555)"
@@ -81,36 +78,9 @@
        :or {port 5555
             host "localhost"}
        :as opts}]
-  (let [c (RiemannThreadedClient.
-            (RiemannTcpClient. (InetSocketAddress. host port)))]
+  (let [c (RiemannClient/tcp host port)]
     (try (connect-client c) (catch IOException e nil))
     c))
-
-(defn retrying-tcp-client
-  "Create a new TCP client. Example:
-
-  (retrying-tcp-client)
-  (retrying-tcp-client :host \"foo\" :port 5555)"
-  [& { :keys [^String host ^Integer port]
-       :or {port 5555
-            host "localhost"}
-       :as opts}]
-  (doto (RiemannRetryingTcpClient. (InetSocketAddress. host port))
-    (connect-client)))
-
-(def tcp-client retrying-tcp-client)
-
-(defn udp-client
-  "Create a new UDP client. Example:
-
-  (udp-client)
-  (udp-client :host \"foo\" :port 5555)"
-  [& {:keys [^String host ^Integer port]
-      :or {port 5555
-            host "localhost"}
-      :as opts}]
-  (doto (RiemannUDPClient. (InetSocketAddress. host port))
-    (connect-client)))
 
 (defn multi-client
   "Creates a new multiclient from n clients"
