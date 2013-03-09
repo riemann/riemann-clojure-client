@@ -72,8 +72,8 @@
 (defn tcp-client
   "Creates a new TCP client. Example:
 
-  (threaded-tcp-client)
-  (threaded-tcp-client :host \"foo\" :port 5555)"
+  (tcp-client)
+  (tcp-client :host \"foo\" :port 5555)"
   [& { :keys [^String host ^Integer port]
        :or {port 5555
             host "localhost"}
@@ -81,6 +81,21 @@
   (let [c (RiemannClient/tcp host port)]
     (try (connect-client c) (catch IOException e nil))
     c))
+
+(defn udp-client
+  "Creates a new UDP client. Can take an optional maximum message size. Example:
+  (udp-client)
+  (udp-client :host \"foo\" :port 5555 :max-size 16384)"
+  [& {:keys [^String host ^Integer port ^Integer max-size]
+      :or {port 5555
+           host "localhost"
+           max-size 16384}
+      :as opts}]
+  (let [c (RiemannClient/udp host port)]
+    (-> c .transport .sendBufferSize (.set max-size))
+    (try (connect-client c) (catch IOException e nil))
+    c))
+
 
 (defn multi-client
   "Creates a new multiclient from n clients"
