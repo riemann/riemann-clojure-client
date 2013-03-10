@@ -21,6 +21,7 @@
                                      RiemannClient 
                                      AbstractRiemannClient)
            (java.util List)
+           (clojure.lang IDeref)
            (java.net InetSocketAddress)
            (java.io IOException))
   (:use riemann.codec)
@@ -31,6 +32,13 @@
   [^AbstractRiemannClient client string]
   (map decode-pb-event (.query client string)))
 
+(defn async-send-events
+  "Sends several events, asynchronously, over client. Returns an IDeref which
+  can be resolved to a response Msg."
+  [^AbstractRiemannClient client events]
+  (let [^List events (map encode-pb-event events)]
+    (.aSendEventsWithAck client events)))
+
 (defn send-events
   "Send several events over client."
   ([client events]
@@ -40,6 +48,12 @@
      (if ack
        (.sendEventsWithAck client events)
        (.sendEvents client events)))))
+
+(defn async-send-event
+  "Sends a single event, asynchronously, over client. Returns an IDeref which
+  can be resolved to a response Msg."
+  [^AbstractRiemannClient client event]
+  (.aSendEventsWithAck client (list (encode-pb-event event))))
 
 (defn send-event
   "Send an event over client."
