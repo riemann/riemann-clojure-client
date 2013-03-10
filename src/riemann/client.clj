@@ -121,6 +121,10 @@
     (proxy [AbstractRiemannClient] []
 ;      (sendMessage [this msg] (throw))
 ;      (recvMessage [this] (throw))
+      (aSendRecvMessage [msg] (.aSendRecvMessage
+                                ^AbstractRiemannClient (c) msg))
+      (aSendMaybeRecvMessage [msg] (.aSendMaybeRecvMessage 
+                                    ^AbstractRiemannClient (c) msg))
       (sendRecvMessage [msg] (.sendRecvMessage 
                                ^AbstractRiemannClient (c) msg))
       (sendMaybeRecvMessage [msg] (.sendMaybeRecvMessage 
