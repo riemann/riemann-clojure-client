@@ -106,7 +106,7 @@
            max-size 16384}
       :as opts}]
   (let [c (RiemannClient/udp host port)]
-    (-> c .transport .sendBufferSize (.set max-size))
+    (-> c .transport .transport .sendBufferSize (.set max-size))
     (try (connect-client c) (catch IOException e nil))
     c))
 
