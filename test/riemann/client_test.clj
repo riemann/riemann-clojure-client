@@ -33,7 +33,7 @@
 
 (deftest default-time
          (let [c (tcp-client)]
-           (testing "defined time"
+           (testing "undefined time"
                     (let [t1 (* 1000 (System/currentTimeMillis))
                           _ (send-event c {:service "test-no-time"})
                           t2 (* 1000 (System/currentTimeMillis))
@@ -41,7 +41,7 @@
                                  (query "service = \"test-no-time\"")
                                  first
                                  :time)]
-                    (is (< t1 t t2))))
+                    (is (<= t1 t t2))))
 
            (testing "with an explicitly nil time"
                     (send-event c {:service "test-nil-time" :time nil})
@@ -59,7 +59,7 @@
 
 (deftest default-host
          (let [c (tcp-client)]
-           (testing "defined host"
+           (testing "undefined host"
                     (send-event c {:service "test-no-host" :state "ok"})
                     (is (= (.. InetAddress getLocalHost getHostName)
                            (-> c (query "service = \"test-no-host\"")
