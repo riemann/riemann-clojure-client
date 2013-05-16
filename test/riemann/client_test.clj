@@ -1,4 +1,5 @@
 (ns riemann.client-test
+  (:import java.net.InetAddress)
   (:use riemann.client
         clojure.test))
 
@@ -29,3 +30,51 @@
                (is (integer? (:time e1))))
              (finally
                (close-client c)))))
+
+(deftest default-time
+         (let [c (tcp-client)]
+           (testing "defined time"
+                    (let [t1 (* 1000 (System/currentTimeMillis))
+                          _ (send-event c {:service "test-no-time"})
+                          t2 (* 1000 (System/currentTimeMillis))
+                          t  (-> c
+                                 (query "service = \"test-no-time\"")
+                                 first
+                                 :time)]
+                    (is (< t1 t t2))))
+
+           (testing "with an explicitly nil time"
+                    (send-event c {:service "test-nil-time" :time nil})
+                    ; Server should fill it in
+                    (is (number? (-> c (query "service = \"test-nil-time\"")
+                                   first
+                                   :time))))
+
+           (testing "with a given time"
+                    (send-event c {:service "test-given-time" :time 1234})
+                    (is (= 1234
+                           (-> c (query "service = \"test-given-time\"")
+                             first
+                             :time))))))
+
+(deftest default-host
+         (let [c (tcp-client)]
+           (testing "defined host"
+                    (send-event c {:service "test-no-host" :state "ok"})
+                    (is (= (.. InetAddress getLocalHost getHostName)
+                           (-> c (query "service = \"test-no-host\"")
+                             first
+                             :host))))
+
+           (testing "with an explicitly nil host"
+                    (send-event c {:service "test-nil-host" :host nil})
+                    (is (nil? (-> c (query "service = \"test-nil-host\"")
+                                first
+                                :host))))
+
+           (testing "with a given host"
+                    (send-event c {:service "test-given-host" :host "foo"})
+                    (is (= "foo"
+                           (-> c (query "service = \"test-given-host\"")
+                             first
+                             :host))))))

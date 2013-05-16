@@ -1,8 +1,9 @@
 (ns riemann.codec
   "Encodes and decodes Riemann messages and events, between byte arrays,
   buffers, and in-memory types."
-  (:require [clojure.set])
+  (:require clojure.set)
   (:import [com.aphyr.riemann Proto$Query Proto$Attribute Proto$Event Proto$Msg]
+           [java.net InetAddress]
            [com.google.protobuf ByteString]))
 
 (defrecord Query [string])
@@ -10,6 +11,17 @@
 (defrecord Msg [ok error events query])
 
 (def event-keys (set (map keyword (Event/getBasis))))
+
+(defn assoc-default
+  "Like assoc, but only alters the map if it does not already contain the given
+  key.
+  
+  (assoc-default {} :foo 2)         ; {:foo 2}
+  (assoc-default {:foo nil} :foo 2) ; {:foo nil}"
+  [m k v]
+  (if (contains? m k)
+    m
+    (assoc m k v)))
 
 (defn decode-pb-query
   "Transforms a java protobuf Query to a Query."
@@ -71,6 +83,15 @@
         (.setValue a (get e k))
         (.addAttributes event a)))
     (.build event)))
+
+(defn encode-client-pb-event
+  "Clients usually fill in an event's local host and time automatically, if
+  not explicitly specified."
+  [e]
+  (-> e
+    (assoc-default :time (* 1000 (System/currentTimeMillis)))
+    (assoc-default :host (.. InetAddress getLocalHost getHostName))
+    encode-pb-event))
 
 (defn decode-pb-msg
   "Transforms a java protobuf Msg to a Msg."

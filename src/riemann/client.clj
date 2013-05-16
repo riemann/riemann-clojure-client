@@ -36,7 +36,7 @@
   "Sends several events, asynchronously, over client. Returns an IDeref which
   can be resolved to a response Msg."
   [^AbstractRiemannClient client events]
-  (let [^List events (map encode-pb-event events)]
+  (let [^List events (map encode-client-pb-event events)]
     (.aSendEventsWithAck client events)))
 
 (defn send-events
@@ -44,7 +44,7 @@
   ([client events]
    (send-events client events true))
   ([^AbstractRiemannClient client events ack]
-   (let [^List events (map encode-pb-event events)]
+   (let [^List events (map encode-client-pb-event events)]
      (if ack
        (.sendEventsWithAck client events)
        (.sendEvents client events)))))
@@ -53,7 +53,7 @@
   "Sends a single event, asynchronously, over client. Returns an IDeref which
   can be resolved to a response Msg."
   [^AbstractRiemannClient client event]
-  (.aSendEventsWithAck client (list (encode-pb-event event))))
+  (.aSendEventsWithAck client (list (encode-client-pb-event event))))
 
 (defn send-event
   "Send an event over client."
