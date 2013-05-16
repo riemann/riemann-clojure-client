@@ -4,14 +4,7 @@ A clojure client for [Riemann](http://aphyr.github.com/riemann)
 
 ## Usage
 
-For riemann-java-client, add the boundary repo to your project.clj:
-```clojure
-:repositories {
-  "boundary-site" "http://maven.boundary.com/artifactory/repo"
-}
-```
-
-Then grab the dependency from [Clojars](https://clojars.org/riemann-clojure-client).
+Download from clojars: https://clojars.org/riemann-clojure-client
 
 ``` clojure
 (use 'riemann.client)
