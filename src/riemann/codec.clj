@@ -89,7 +89,7 @@
   not explicitly specified."
   [e]
   (-> e
-    (assoc-default :time (* 1000 (System/currentTimeMillis)))
+    (assoc-default :time (/ (System/currentTimeMillis) 1000))
     (assoc-default :host (.. InetAddress getLocalHost getHostName))
     encode-pb-event))
 
