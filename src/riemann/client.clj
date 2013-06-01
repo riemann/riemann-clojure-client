@@ -19,7 +19,9 @@
 
   (:import (com.aphyr.riemann.client RiemannBatchClient
                                      RiemannClient 
-                                     AbstractRiemannClient)
+                                     AbstractRiemannClient
+                                     TcpTransport
+                                     SSL)
            (java.util List)
            (clojure.lang IDeref)
            (java.net InetSocketAddress)
@@ -84,17 +86,47 @@
    (RiemannBatchClient. n client)))
 
 (defn tcp-client
-  "Creates a new TCP client. Example:
+  "Creates a new TCP client. Options:
+
+  :host       The host to connect to
+  :port       The port to connect to
+  
+  :tls?       Whether to use TLS when connecting
+  :key        A PKCS8 key file
+  :cert       A PEM certificate
+  :ca-cert    The signing cert for our certificate and the server's
+  
+  Example:
 
   (tcp-client)
   (tcp-client :host \"foo\" :port 5555)"
-  [& { :keys [^String host ^Integer port]
+  [& { :keys [^String host ^Integer port
+              tls? ^String key ^String cert ^String ca-cert]
        :or {port 5555
             host "localhost"}
        :as opts}]
-  (let [c (RiemannClient/tcp host port)]
-    (try (connect-client c) (catch IOException e nil))
-    c))
+
+  ; Check options
+  (when tls?
+    (assert key)
+    (assert cert)
+    (assert ca-cert))
+
+  ; Create client
+  (let [client (if tls?
+                 ; TLS client
+                 (RiemannClient.
+                   (doto (TcpTransport. host port)
+                     (-> .sslContext
+                       (.set (SSL/sslContext key cert ca-cert)))))
+                     
+                 ; Standard client
+                 (RiemannClient/tcp host port))]
+
+    ; Attempt to connect lazily.
+    (try (connect-client client)
+      (catch IOException e nil))
+    client))
 
 (defn udp-client
   "Creates a new UDP client. Can take an optional maximum message size. Example:
