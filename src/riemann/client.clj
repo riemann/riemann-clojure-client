@@ -102,8 +102,7 @@
   (tcp-client :host \"foo\" :port 5555)"
   [& { :keys [^String host ^Integer port
               tls? ^String key ^String cert ^String ca-cert]
-       :or {port 5555
-            host "localhost"}
+       :or {host "localhost"}
        :as opts}]
 
   ; Check options
@@ -113,7 +112,8 @@
     (assert ca-cert))
 
   ; Create client
-  (let [client (if tls?
+  (let [port   (or port (if tls? 5554 5555))
+        client (if tls?
                  ; TLS client
                  (RiemannClient.
                    (doto (TcpTransport. host port)
