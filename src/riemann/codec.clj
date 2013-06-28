@@ -8,7 +8,7 @@
 
 (defrecord Query [string])
 (defrecord Event [host service state description metric tags time ttl])
-(defrecord Msg [ok error events query])
+(defrecord Msg [ok error events query decode-time])
 
 (def event-keys (set (map keyword (Event/getBasis))))
 
@@ -60,7 +60,7 @@
                        (.getAttributesList e)))
       event)))
 
-(defn encode-pb-event
+(defn ^Proto$Event encode-pb-event
   "Transforms a map to a java protobuf Event."
   [e]
   (let [event (Proto$Event/newBuilder)]
@@ -96,12 +96,14 @@
 (defn decode-pb-msg
   "Transforms a java protobuf Msg to a Msg."
   [^Proto$Msg m]
-  (Msg. (when (.hasOk m) (.getOk m))
-        (when (.hasError m) (.getError m))
-        (map decode-pb-event (.getEventsList m))
-        (when (.hasQuery m) (decode-pb-query (.getQuery m)))))
+  (let [t (System/nanoTime)]
+    (Msg. (when (.hasOk m) (.getOk m))
+          (when (.hasError m) (.getError m))
+          (map decode-pb-event (.getEventsList m))
+          (when (.hasQuery m) (decode-pb-query (.getQuery m)))
+          t)))
 
-(defn encode-pb-msg
+(defn ^Proto$Msg encode-pb-msg
   "Transform a map to a java probuf Msg."
   [m]
   (let [msg (Proto$Msg/newBuilder)]

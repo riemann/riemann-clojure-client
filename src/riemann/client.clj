@@ -18,9 +18,11 @@
   RiemannRetryingTcpClient."
 
   (:import (com.aphyr.riemann.client RiemannBatchClient
-                                     RiemannClient 
+                                     RiemannClient
+                                     AsynchronizeTransport 
                                      AbstractRiemannClient
                                      TcpTransport
+                                     UdpTransport
                                      SSL)
            (java.util List)
            (clojure.lang IDeref)
@@ -55,7 +57,7 @@
   "Sends a single event, asynchronously, over client. Returns an IDeref which
   can be resolved to a response Msg."
   [^AbstractRiemannClient client event]
-  (.aSendEventsWithAck client (list (encode-client-pb-event event))))
+  (.aSendEventsWithAck client ^List (list (encode-client-pb-event event))))
 
 (defn send-event
   "Send an event over client."
@@ -137,11 +139,11 @@
            host "localhost"
            max-size 16384}
       :as opts}]
-  (let [c (RiemannClient/udp host port)]
-    (-> c .transport .transport .sendBufferSize (.set max-size))
+  (let [c (RiemannClient.
+          (doto (UdpTransport. host port)
+            (-> .sendBufferSize (.set max-size))))]
     (try (connect-client c) (catch IOException e nil))
     c))
-
 
 (defn multi-client
   "Creates a new multiclient from n clients"
@@ -161,5 +163,7 @@
                                ^AbstractRiemannClient (c) msg))
       (sendMaybeRecvMessage [msg] (.sendMaybeRecvMessage 
                                     ^AbstractRiemannClient (c) msg))
-      (connect [] (doseq [client clients] (.connect client)))
-      (disconnect [] (doseq [client clients] (.disconnect client))))))
+      (connect [] (doseq [client clients] (.connect
+                                            ^AbstractRiemannClient client)))
+      (disconnect [] (doseq [client clients] (.disconnect
+                                              ^AbstractRiemannClient client))))))
