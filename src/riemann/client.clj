@@ -11,7 +11,7 @@
   (query c \"tagged \\\"joke\\\"\")
   => [{:service \"fridge\" ... }]
 
-  (close c)
+  (close-client c)
 
   Clients are mildly resistant to failure; they will attempt to reconnect a
   dropped connection once before giving up. They're backed by a
