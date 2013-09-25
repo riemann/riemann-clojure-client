@@ -34,9 +34,9 @@
 (deftest default-time
          (let [c (tcp-client)]
            (testing "undefined time"
-                    (let [t1 (* 1000 (System/currentTimeMillis))
+                    (let [t1 (quot (System/currentTimeMillis) 1000)
                           _ (send-event c {:service "test-no-time"})
-                          t2 (* 1000 (System/currentTimeMillis))
+                          t2 (quot (System/currentTimeMillis) 1000)
                           t  (-> c
                                  (query "service = \"test-no-time\"")
                                  first
