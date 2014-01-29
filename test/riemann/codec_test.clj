@@ -27,7 +27,10 @@
     (map->Msg)))
 
 (deftest protobufs
-         (let [roundtrip (comp decode-pb-msg encode-pb-msg)]
+         (let [roundtrip (fn [m] (-> m
+                                     encode-pb-msg
+                                     decode-pb-msg
+                                     (assoc :decode-time nil)))]
            (are [m] (= (msg m) (roundtrip m))
                 {}
                 {:ok true}
