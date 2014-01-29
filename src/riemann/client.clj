@@ -1,10 +1,10 @@
 (ns riemann.client
   "Network client for connecting to a Riemann server. Usage:
-  
+
   (def c (tcp-client :host \"monitoring.local\"))
- 
-  (send-event c {:service \"fridge\" 
-                 :state \"running\" 
+
+  (send-event c {:service \"fridge\"
+                 :state \"running\"
                  :metric 2.0
                  :tags [\"joke\"]})
 
@@ -13,13 +13,12 @@
 
   (close-client c)
 
-  Clients are mildly resistant to failure; they will attempt to reconnect a
-  dropped connection once before giving up. They're backed by a
-  RiemannRetryingTcpClient."
-
+  Clients are resistant to failure; they will attempt to reconnect a dropped
+  connection periodically. Note that clients will not automatically queue or
+  retry failed sends."
   (:import (com.aphyr.riemann.client RiemannBatchClient
                                      RiemannClient
-                                     AsynchronizeTransport 
+                                     AsynchronizeTransport
                                      AbstractRiemannClient
                                      TcpTransport
                                      UdpTransport
@@ -44,7 +43,8 @@
     (.aSendEventsWithAck client events)))
 
 (defn send-events
-  "Send several events over client."
+  "Send several events over client. Requests acknowledgement from the Riemann
+  server by default. If ack is false, sends in fire-and-forget mode."
   ([client events]
    (send-events client events true))
   ([^AbstractRiemannClient client events ack]
@@ -60,7 +60,8 @@
   (.aSendEventsWithAck client ^List (list (encode-client-pb-event event))))
 
 (defn send-event
-  "Send an event over client."
+  "Send an event over client. Requests acknowledgement from the Riemann
+    server by default. If ack is false, sends in fire-and-forget mode."
   ([client event]
    (send-event client event true))
   ([^AbstractRiemannClient client event ack]
