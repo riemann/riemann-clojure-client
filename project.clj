@@ -5,4 +5,4 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.0"]
                  [org.clojure/tools.logging "0.2.3"]
-                 [com.aphyr/riemann-java-client "0.2.8"]])
+                 [com.aphyr/riemann-java-client "0.2.10-SNAPSHOT"]])

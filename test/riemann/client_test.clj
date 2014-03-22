@@ -1,5 +1,6 @@
 (ns riemann.client-test
-  (:import java.net.InetAddress)
+  (:import java.net.InetAddress
+           com.aphyr.riemann.client.OverloadedException)
   (:use riemann.client
         clojure.test))
 
@@ -17,6 +18,21 @@
                      (= "hi there"))))
              (finally
                (close-client c)))))
+
+(deftest load-shedding-test
+  (let [c (tcp-client)
+        e {:service "overload-test" :ttl 10 :description (apply str (repeat 1e2 "x"))}]
+    (try
+      (let [results (->> (repeat 1e5 e)
+                         (pmap (partial async-send-event c))
+                         doall)
+            ok      (->> results
+                         (map #(try (deref %) 1
+                                    (catch OverloadedException e 0)))
+                         (reduce +))]
+        (is (< ok (count results))))
+      (finally
+        (close-client c)))))
 
 (deftest send-query
          (let [c (tcp-client)
