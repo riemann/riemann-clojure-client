@@ -39,17 +39,19 @@
   "Transforms a java protobuf to an Event."
   [^Proto$Event e]
   (Event.
-    (when (.hasHost e) (.getHost e))
-    (when (.hasService e) (.getService e))
-    (when (.hasState e) (.getState e))
+    (when (.hasHost e)        (.getHost e))
+    (when (.hasService e)     (.getService e))
+    (when (.hasState e)       (.getState e))
     (when (.hasDescription e) (.getDescription e))
     (cond
-      (.hasMetricSint64 e) (.getMetricSint64 e)
-      (.hasMetricD e)      (.getMetricD e)
-      (.hasMetricF e)      (.getMetricF e))
+      (.hasMetricSint64 e)    (.getMetricSint64 e)
+      (.hasMetricD e)         (.getMetricD e)
+      (.hasMetricF e)         (.getMetricF e))
     (when (< 0 (.getTagsCount e)) (vec (.getTagsList e)))
-    (when (.hasTime e) (.getTime e))
-    (when (.hasTtl e) (.getTtl e))))
+    (if   (.hasTime e)        (.getTime e)
+                              (/ (double (System/currentTimeMillis))
+                                 1000))
+    (when (.hasTtl e)         (.getTtl e))))
 
 (defn decode-pb-event
   [^Proto$Event e]
