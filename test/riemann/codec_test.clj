@@ -27,10 +27,18 @@
     (map->Msg)))
 
 (deftest protobufs
-         (let [roundtrip (fn [m] (-> m
-                                     encode-pb-msg
-                                     decode-pb-msg
-                                     (assoc :decode-time nil)))]
+  (let [roundtrip (fn [m] (let [m' (-> m
+                                       encode-pb-msg
+                                       decode-pb-msg
+                                       (assoc :decode-time nil))]
+                            ; Ignore automatically provided times.
+                            (->> (:events m')
+                                 (map (fn [e e']
+                                        (if (:time e)
+                                          e'
+                                          (assoc e' :time nil)))
+                                      (:events m))
+                                 (assoc m' :events))))]
            (are [m] (= (msg m) (roundtrip m))
                 {}
                 {:ok true}
@@ -79,6 +87,6 @@
                                    :tags ["a" "b" "c"]
                                    :time 12345
                                    :ttl (float 10)}]})]
-;             (time (dotimes [n 10000000] 
-;                     (roundtrip m)))))) 
+;             (time (dotimes [n 10000000]
+;                     (roundtrip m))))))
              )))
