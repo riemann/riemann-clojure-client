@@ -4,7 +4,7 @@
         clojure.test))
 
 (deftest async-test
-         (let [c (tcp-client)
+         (let [c (tcp-client :host "localhost")
                e {:service "async-test" :foo "hi there"}]
            (try
              (let [res (async-send-event c e)]
@@ -19,7 +19,7 @@
                (close-client c)))))
 
 (deftest send-query
-         (let [c (tcp-client)
+         (let [c (tcp-client {:host "localhost"})
                e {:service "test" :state "ok"}]
            (try
              (send-event c e)
