@@ -27,6 +27,7 @@
            (clojure.lang IDeref)
            (java.net InetSocketAddress)
            (java.io IOException))
+  (:require [less.awful.ssl :as ssl])
   (:use riemann.codec)
   (:use clojure.tools.logging))
 
@@ -111,9 +112,9 @@
         {:keys [^String host
                 ^Integer port
                 tls?
-                ^String key
-                ^String cert
-                ^String ca-cert]
+                key
+                cert
+                ca-cert]
          :or {host "localhost"}} opts]
 
     ; Check options
@@ -129,7 +130,9 @@
                    (RiemannClient.
                      (doto (TcpTransport. host port)
                        (-> .sslContext
-                           (.set (SSL/sslContext key cert ca-cert)))))
+                           ;; (.set (SSL/sslContext key cert ca-cert))
+                           (.set (ssl/ssl-context key cert ca-cert))
+                           )))
 
                    ; Standard client
                    (RiemannClient/tcp host port))]
