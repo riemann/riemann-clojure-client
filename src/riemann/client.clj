@@ -96,7 +96,7 @@
   :port       The port to connect to
 
   :tls?       Whether to use TLS when connecting
-  :key        A PKCS8 key file
+  :key        A PKCS8 key 
   :cert       A PEM certificate
   :ca-cert    The signing cert for our certificate and the server's
 
