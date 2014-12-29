@@ -1,7 +1,7 @@
 (ns riemann.client
   "Network client for connecting to a Riemann server. Usage:
 
-  (def c (tcp-client :host \"monitoring.local\"))
+  (def c (tcp-client {:host \"monitoring.local\"}))
 
   (send-event c {:service \"fridge\"
                  :state \"running\"
@@ -27,6 +27,7 @@
            (clojure.lang IDeref)
            (java.net InetSocketAddress)
            (java.io IOException))
+  (:require [less.awful.ssl :as ssl])
   (:use riemann.codec)
   (:use clojure.tools.logging))
 
@@ -99,57 +100,74 @@
 
   :host       The host to connect to
   :port       The port to connect to
-  
+
   :tls?       Whether to use TLS when connecting
-  :key        A PKCS8 key file
+  :key        A PKCS8 key 
   :cert       A PEM certificate
   :ca-cert    The signing cert for our certificate and the server's
-  
+
   Example:
 
   (tcp-client)
-  (tcp-client :host \"foo\" :port 5555)"
-  [& { :keys [^String host ^Integer port
-              tls? ^String key ^String cert ^String ca-cert]
-       :or {host "localhost"}
-       :as opts}]
+  (tcp-client {:host \"foo\" :port 5555})"
+  [& opts]
+  (let [opts (if (and (= 1 (count opts))
+                      (map? (first opts)))
+               (first opts)
+               (apply hash-map opts))
+        {:keys [^String host
+                ^Integer port
+                tls?
+                key
+                cert
+                ca-cert]
+         :or {host "localhost"}} opts]
 
-  ; Check options
-  (when tls?
-    (assert key)
-    (assert cert)
-    (assert ca-cert))
+    ; Check options
+    (when tls?
+      (assert key)
+      (assert cert)
+      (assert ca-cert))
 
-  ; Create client
-  (let [port   (or port (if tls? 5554 5555))
-        client (if tls?
-                 ; TLS client
-                 (RiemannClient.
-                   (doto (TcpTransport. host port)
-                     (-> .sslContext
-                       (.set (SSL/sslContext key cert ca-cert)))))
-                     
-                 ; Standard client
-                 (RiemannClient/tcp host port))]
+    ; Create client
+    (let [port   (or port (if tls? 5554 5555))
+          client (if tls?
+                   ; TLS client
+                   (RiemannClient.
+                     (doto (TcpTransport. host port)
+                       (-> .sslContext
+                           ;; (.set (SSL/sslContext key cert ca-cert))
+                           (.set (ssl/ssl-context key cert ca-cert))
+                           )))
 
-    ; Attempt to connect lazily.
-    (try (connect-client client)
-      (catch IOException e nil))
-    client))
+                   ; Standard client
+                   (RiemannClient/tcp host port))]
+
+      ; Attempt to connect lazily.
+      (try (connect-client client)
+           (catch IOException e nil))
+      client)))
 
 (defn udp-client
   "Creates a new UDP client. Can take an optional maximum message size. Example:
   (udp-client)
-  (udp-client :host \"foo\" :port 5555 :max-size 16384)"
-  [& {:keys [^String host ^Integer port ^Integer max-size]
-      :or {port 5555
-           host "localhost"
-           max-size 16384}
-      :as opts}]
-  (let [c (RiemannClient.
-          (doto (UdpTransport. host port)
-            (-> .sendBufferSize (.set max-size))))]
-    (try (connect-client c) (catch IOException e nil))
+  (udp-client {:host \"foo\" :port 5555 :max-size 16384})"
+  [& opts]
+  (let [opts (if (and (= 1 (count opts))
+                      (map? (first opts)))
+               (first opts)
+               (apply hash-map opts))
+        {:keys [^String host
+                ^Integer port
+                ^Integer max-size]
+         :or {port 5555
+              host "localhost"
+              max-size 16384}} opts
+        c (RiemannClient.
+            (doto (UdpTransport. host port)
+              (-> .sendBufferSize (.set max-size))))]
+    (try (connect-client c)
+         (catch IOException e nil))
     c))
 
 (defn multi-client
