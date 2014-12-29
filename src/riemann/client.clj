@@ -35,6 +35,12 @@
   [^AbstractRiemannClient client string]
   (map decode-pb-event (.query client string)))
 
+(defn async-send-msg
+  "Send a message to the server, asynchronously. Returns an IDeref which can be
+  resolved to a response Msg."
+  [^AbstractRiemannClient client msg]
+  (.aSendRecvMessage client msg))
+
 (defn async-send-events
   "Sends several events, asynchronously, over client. Returns an IDeref which
   can be resolved to a response Msg."
