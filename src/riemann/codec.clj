@@ -15,7 +15,7 @@
 (defn assoc-default
   "Like assoc, but only alters the map if it does not already contain the given
   key.
-  
+
   (assoc-default {} :foo 2)         ; {:foo 2}
   (assoc-default {:foo nil} :foo 2) ; {:foo nil}"
   [m k v]
@@ -96,7 +96,7 @@
     encode-pb-event))
 
 (defn decode-pb-msg
-  "Transforms a java protobuf Msg to a Msg."
+  "Transforms a java protobuf Msg to a defrecord Msg."
   [^Proto$Msg m]
   (let [t (System/nanoTime)]
     (Msg. (when (.hasOk m) (.getOk m))
@@ -106,12 +106,14 @@
           t)))
 
 (defn ^Proto$Msg encode-pb-msg
-  "Transform a map to a java probuf Msg."
+  "Transform a Protobuf Msg or a Clojure map to a java Protobuf Msg."
   [m]
-  (let [msg (Proto$Msg/newBuilder)]
-    (when-let [events (:events m)] 
-      (.addAllEvents msg (map encode-pb-event events)))
-    (when-not (nil? (:ok m)) (.setOk msg (:ok m)))
-    (when (:error m) (.setError msg (:error m)))
-    (when (:query m) (.setQuery msg (encode-pb-query (:query m))))
-    (.build msg)))
+  (if (instance? Proto$Msg m)
+    m
+    (let [msg (Proto$Msg/newBuilder)]
+      (when-let [events (:events m)]
+        (.addAllEvents msg (map encode-pb-event events)))
+      (when-not (nil? (:ok m)) (.setOk msg (:ok m)))
+      (when (:error m) (.setError msg (:error m)))
+      (when (:query m) (.setQuery msg (encode-pb-query (:query m))))
+      (.build msg))))

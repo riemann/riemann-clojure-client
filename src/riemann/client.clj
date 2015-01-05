@@ -7,19 +7,24 @@
                  :state \"running\"
                  :metric 2.0
                  :tags [\"joke\"]})
+  => #<com.aphyr.riemann.client.MapPromise ...>
 
-  (query c \"tagged \\\"joke\\\"\")
+  @(query c \"tagged \\\"joke\\\"\")
   => [{:service \"fridge\" ... }]
 
-  (close-client c)
+  (close! c)
 
   Clients are resistant to failure; they will attempt to reconnect a dropped
   connection periodically. Note that clients will not automatically queue or
   retry failed sends."
   (:import (com.aphyr.riemann.client RiemannBatchClient
                                      RiemannClient
-                                     AsynchronizeTransport
-                                     AbstractRiemannClient
+                                     MapPromise
+                                     IPromise
+                                     Fn2
+                                     Transport
+                                     AsynchronousTransport
+                                     IRiemannClient
                                      TcpTransport
                                      UdpTransport
                                      SSL)
@@ -31,69 +36,87 @@
   (:use riemann.codec)
   (:use clojure.tools.logging))
 
+(defn map-promise
+  "Maps a riemann client promise by applying a function."
+  [^IPromise p f]
+  (.map p (reify Fn2 (call [_ x] (f x)))))
+
+(defn send-msg
+  "Send a message to the server, asynchronously. Returns an IDeref which can be
+  resolved to a response message."
+  [^AsynchronousTransport client msg]
+  (-> client
+      (.sendMessage (encode-pb-msg msg))
+      (map-promise decode-pb-msg)))
+
 (defn query
   "Query the server for events in the index. Returns a list of events."
-  [^AbstractRiemannClient client string]
-  (map decode-pb-event (.query client string)))
-
-(defn async-send-msg
-  "Send a message to the server, asynchronously. Returns an IDeref which can be
-  resolved to a response Msg."
-  [^AbstractRiemannClient client msg]
-  (.aSendRecvMessage client msg))
-
-(defn async-send-events
-  "Sends several events, asynchronously, over client. Returns an IDeref which
-  can be resolved to a response Msg."
-  [^AbstractRiemannClient client events]
-  (let [^List events (map encode-client-pb-event events)]
-    (.aSendEventsWithAck client events)))
+  [^IRiemannClient client string]
+  (-> client
+      (.query string)
+      (map-promise (partial map decode-pb-event))))
 
 (defn send-events
-  "Send several events over client. Requests acknowledgement from the Riemann
-  server by default. If ack is false, sends in fire-and-forget mode."
-  ([client events]
-   (send-events client events true))
-  ([^AbstractRiemannClient client events ack]
-   (let [^List events (map encode-client-pb-event events)]
-     (if ack
-       (.sendEventsWithAck client events)
-       (.sendEvents client events)))))
-
-(defn async-send-event
-  "Sends a single event, asynchronously, over client. Returns an IDeref which
-  can be resolved to a response Msg."
-  [^AbstractRiemannClient client event]
-  (.aSendEventsWithAck client ^List (list (encode-client-pb-event event))))
+  "Sends several events, asynchronously, over client. Returns an IDeref which
+  can be resolved to a response message."
+  [^IRiemannClient client events]
+  (-> client
+      (.sendEvents ^List (map encode-client-pb-event events))
+      (map-promise decode-pb-msg)))
 
 (defn send-event
-  "Send an event over client. Requests acknowledgement from the Riemann
-    server by default. If ack is false, sends in fire-and-forget mode."
-  ([client event]
-   (send-event client event true))
-  ([^AbstractRiemannClient client event ack]
-   (send-events client (list event) ack)))
+  "Sends a single event, asynchronously, over client. Returns an IDeref which
+  can be resolved to a response message."
+  [^IRiemannClient client event]
+  (-> client
+      (.sendEvent (encode-client-pb-event event))
+      (map-promise decode-pb-msg)))
 
-(defn connect-client
-  "Connect a client."
-  [^AbstractRiemannClient client]
-  (.connect client))
+(defn send-exception
+  "Send an exception, asynchronously, over client. Uses (:name service) as the
+  service. Returns an IDeref which can be resolved to a response message."
+  [^IRiemannClient client service ^Throwable t]
+  (-> client
+      (.sendException (name service) t)
+      (map-promise decode-pb-msg)))
 
-(defn close-client
-  "Close a client."
-  [^AbstractRiemannClient client]
-  (.disconnect client))
+; Transports
 
-(defn reconnect-client
-  "Reconnect a client."
-  [^AbstractRiemannClient client]
+(defn connect!
+  "Connect a client or transport."
+  [^Transport t]
+  (.connect t))
+
+(defn connected?
+  "Is a client or transport connected?"
+  [^Transport t]
+  (.isConnected t))
+
+(defn close!
+  "Close a client or transport, shutting it down."
+  [^Transport client]
+  (.close client))
+
+(defn flush!
+  "Flush messages from a client or transport's buffers."
+  [^Transport t]
+  (.flush t))
+
+(defn reconnect!
+  "Reconnect a client or transport."
+  [^Transport client]
   (.reconnect client))
 
-(defn batch
+(defn transport
+  "Get an underlying transport from a client or transport."
+  [^Transport t]
+  (.transport t))
+
+(defn batch-client
   "Wraps a client in a RiemannBatchClient, with batch size n."
-  ([client] (batch 10 client))
-  ([n ^AbstractRiemannClient client]
-   (RiemannBatchClient. n client)))
+  ([client] (batch-client client 10))
+  ([^IRiemannClient client n]
+   (RiemannBatchClient. client n)))
 
 (defn tcp-client
   "Creates a new TCP client. Options:
@@ -102,7 +125,7 @@
   :port       The port to connect to
 
   :tls?       Whether to use TLS when connecting
-  :key        A PKCS8 key 
+  :key        A PKCS8 key
   :cert       A PEM certificate
   :ca-cert    The signing cert for our certificate and the server's
 
@@ -137,14 +160,13 @@
                      (doto (TcpTransport. host port)
                        (-> .sslContext
                            ;; (.set (SSL/sslContext key cert ca-cert))
-                           (.set (ssl/ssl-context key cert ca-cert))
-                           )))
+                           (.set (ssl/ssl-context key cert ca-cert)))))
 
                    ; Standard client
                    (RiemannClient/tcp host port))]
 
       ; Attempt to connect lazily.
-      (try (connect-client client)
+      (try (connect! client)
            (catch IOException e nil))
       client)))
 
@@ -166,7 +188,7 @@
         c (RiemannClient.
             (doto (UdpTransport. host port)
               (-> .sendBufferSize (.set max-size))))]
-    (try (connect-client c)
+    (try (connect! c)
          (catch IOException e nil))
     c))
 
@@ -177,18 +199,22 @@
         n       (count clients)
         c       (fn choose-client []
                   (clients (mod (.getId (Thread/currentThread)) n)))]
-    (proxy [AbstractRiemannClient] []
-;      (sendMessage [this msg] (throw))
-;      (recvMessage [this] (throw))
-      (aSendRecvMessage [msg] (.aSendRecvMessage
-                                ^AbstractRiemannClient (c) msg))
-      (aSendMaybeRecvMessage [msg] (.aSendMaybeRecvMessage 
-                                    ^AbstractRiemannClient (c) msg))
-      (sendRecvMessage [msg] (.sendRecvMessage 
-                               ^AbstractRiemannClient (c) msg))
-      (sendMaybeRecvMessage [msg] (.sendMaybeRecvMessage 
-                                    ^AbstractRiemannClient (c) msg))
-      (connect [] (doseq [client clients] (.connect
-                                            ^AbstractRiemannClient client)))
-      (disconnect [] (doseq [client clients] (.disconnect
-                                              ^AbstractRiemannClient client))))))
+
+    (reify IRiemannClient
+      ; Transport
+      (isConnected [c] (boolean (some connected? clients)))
+      (connect     [c] (locking c (dorun (map connect! clients))))
+      (reconnect   [c] (locking c (dorun (map reconnect! clients))))
+      (close       [c] (locking c (dorun (map close! clients))))
+      (flush       [c] (dorun (map flush! clients)))
+      (transport   [c] (throw (UnsupportedOperationException.)))
+
+      ; Client
+      (sendMessage    [_ msg] (.sendMessage ^IRiemannClient (c) msg))
+      (sendEvent      [_ e]   (.sendEvent ^IRiemannClient (c) e))
+
+      (^IPromise sendEvents [_ ^List es]
+        (.sendEvents ^IRiemannClient (c) ^List es))
+
+      (sendException  [_ s t] (.sendException ^IRiemannClient (c) s t))
+      (event          [_]     (.event ^IRiemannClient (c))))))
