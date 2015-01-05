@@ -112,13 +112,13 @@
   [^Transport t]
   (.transport t))
 
-(defn batch-client
+(defn ^RiemannBatchClient batch-client
   "Wraps a client in a RiemannBatchClient, with batch size n."
   ([client] (batch-client client 10))
   ([^IRiemannClient client n]
    (RiemannBatchClient. client n)))
 
-(defn tcp-client
+(defn ^RiemannClient tcp-client
   "Creates a new TCP client. Options:
 
   :host       The host to connect to
@@ -170,7 +170,7 @@
            (catch IOException e nil))
       client)))
 
-(defn udp-client
+(defn ^RiemannClient udp-client
   "Creates a new UDP client. Can take an optional maximum message size. Example:
   (udp-client)
   (udp-client {:host \"foo\" :port 5555 :max-size 16384})"
@@ -192,13 +192,13 @@
          (catch IOException e nil))
     c))
 
-(defn multi-client
+(defn ^IRiemannClient multi-client
   "Creates a new multiclient from n clients"
   [clients]
   (let [clients (vec clients)
         n       (count clients)
         c       (fn choose-client []
-                  (clients (mod (.getId (Thread/currentThread)) n)))]
+                  (nth clients (mod (.getId (Thread/currentThread)) n)))]
 
     (reify IRiemannClient
       ; Transport
