@@ -101,7 +101,7 @@
   (let [t (System/nanoTime)]
     (Msg. (when (.hasOk m) (.getOk m))
           (when (.hasError m) (.getError m))
-          (map decode-pb-event (.getEventsList m))
+          (mapv decode-pb-event (.getEventsList m))
           (when (.hasQuery m) (decode-pb-query (.getQuery m)))
           t)))
 
@@ -112,7 +112,8 @@
     m
     (let [msg (Proto$Msg/newBuilder)]
       (when-let [events (:events m)]
-        (.addAllEvents msg (map encode-pb-event events)))
+        (doseq [e events]
+          (.addEvents msg (encode-pb-event e))))
       (when-not (nil? (:ok m)) (.setOk msg (:ok m)))
       (when (:error m) (.setError msg (:error m)))
       (when (:query m) (.setQuery msg (encode-pb-query (:query m))))
