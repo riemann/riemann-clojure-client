@@ -27,19 +27,19 @@
         (is (float? (:ttl e1)))
         (is (integer? (:time e1)))))))
 
-(deftest load-shedding-test
-  (with-open [c (tcp-client)]
-    (let [e {:service "overload-test"
-             :ttl 10
-             :description (apply str (repeat 1e2 "x"))}
-          results (->> (repeat 1e5 e)
-                       (pmap (partial send-event c))
-                       doall)
-            ok      (->> results
-                         (map #(try (deref %) 1
-                                    (catch OverloadedException e 0)))
-                         (reduce +))]
-        (is (< ok (count results))))))
+;(deftest load-shedding-test
+;  (with-open [c (tcp-client)]
+;    (let [e {:service "overload-test"
+;             :ttl 10
+;             :description (apply str (repeat 1000 "x"))}
+;          results (->> (repeat 1e6 e)
+;                       (pmap (partial send-event c))
+;                       doall)
+;            ok      (->> results
+;                         (map #(try (deref %) 1
+;                                    (catch OverloadedException e 0)))
+;                         (reduce +))]
+;        (is (< ok (count results))))))
 
 (deftest default-time
   (with-open [c (tcp-client :host "localhost")]
