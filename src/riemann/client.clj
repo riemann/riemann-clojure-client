@@ -128,6 +128,7 @@
   :key        A PKCS8 key
   :cert       A PEM certificate
   :ca-cert    The signing cert for our certificate and the server's
+  :dns-cache? Allow DNS caching? (default: false)
 
   Example:
 
@@ -143,8 +144,9 @@
                 tls?
                 key
                 cert
-                ca-cert]
-         :or {host "localhost"}} opts]
+                ca-cert
+                ^Boolean dns-cache?]
+         :or {host "localhost", dns-cache? false}} opts]
 
     ; Check options
     (when tls?
@@ -160,10 +162,12 @@
                      (doto (TcpTransport. host port)
                        (-> .sslContext
                            ;; (.set (SSL/sslContext key cert ca-cert))
-                           (.set (ssl/ssl-context key cert ca-cert)))))
+                           (.set (ssl/ssl-context key cert ca-cert)))
+                       (-> .cacheDns (.set dns-cache?))))
 
                    ; Standard client
-                   (RiemannClient/tcp host port))]
+                   (doto (RiemannClient/tcp host port)
+                     (-> .transport .cacheDns (.set dns-cache?))))]
 
       ; Attempt to connect lazily.
       (try (connect! client)
