@@ -1,4 +1,4 @@
-(defproject riemann-clojure-client "0.3.2"
+(defproject riemann-clojure-client "0.3.3-SNAPSHOT"
   :description "Clojure client for the Riemann monitoring system"
   :url "https://github.com/aphyr/riemann-clojure-client"
   :license {:name "Eclipse Public License"
