@@ -11,7 +11,7 @@ Download from clojars: https://clojars.org/riemann-clojure-client
 (def c (r/tcp-client {:host "1.2.3.4"}))
 (-> c (r/send-event {:service "foo" :state "ok"})
       (deref 5000 ::timeout))
-@(r/query c "state = \"ok\)
+@(r/query c "state = \"ok\"")
 ```
 
 All operations return deref-able Riemann Promises, supporting both the untimed
