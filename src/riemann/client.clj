@@ -195,7 +195,7 @@
         c (RiemannClient.
             (doto (UdpTransport. host port)
               (-> .sendBufferSize (.set max-size))
-              (-> .transport .cacheDns (.set cache-dns?))))]
+              (-> .cacheDns (.set cache-dns?))))]
     (try (connect! c)
          (catch IOException e nil))
     c))
