@@ -36,7 +36,7 @@
     (let [e {:service "overload-test"
              :ttl 10
              :description (apply str (repeat 100 "x"))}
-          results (->> (repeat 100 e)
+          results (->> (repeat 1000 e)
                        (pmap (partial send-event c))
                        doall)
           outcomes (->> results
