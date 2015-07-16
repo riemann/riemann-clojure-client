@@ -30,13 +30,13 @@
 (deftest load-shedding-test
   (with-open [c (tcp-client)]
     (close! c)
-    (.. c transport (setWriteBufferLimit 5))
+    (.. c transport (setWriteBufferLimit 2))
     (connect! c)
 
     (let [e {:service "overload-test"
              :ttl 10
              :description (apply str (repeat 100 "x"))}
-          results (->> (repeat 1000 e)
+          results (->> (repeat 10000 e)
                        (pmap (partial send-event c))
                        doall)
           outcomes (->> results
