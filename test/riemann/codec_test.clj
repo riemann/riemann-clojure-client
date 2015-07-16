@@ -87,6 +87,6 @@
                                    :tags ["a" "b" "c"]
                                    :time 12345
                                    :ttl (float 10)}]})]
-;             (time (dotimes [n 10000000]
-;                     (roundtrip m))))))
+             ;(time (dotimes [n 10000000]
+                     ;(roundtrip m))))))
              )))

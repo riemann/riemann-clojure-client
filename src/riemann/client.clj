@@ -128,6 +128,7 @@
   :key        A PKCS8 key
   :cert       A PEM certificate
   :ca-cert    The signing cert for our certificate and the server's
+  :cache-dns? Allow DNS caching? (default: false)
 
   Example:
 
@@ -143,8 +144,9 @@
                 tls?
                 key
                 cert
-                ca-cert]
-         :or {host "localhost"}} opts]
+                ca-cert
+                ^Boolean cache-dns?]
+         :or {host "localhost", cache-dns? false}} opts]
 
     ; Check options
     (when tls?
@@ -160,10 +162,12 @@
                      (doto (TcpTransport. host port)
                        (-> .sslContext
                            ;; (.set (SSL/sslContext key cert ca-cert))
-                           (.set (ssl/ssl-context key cert ca-cert)))))
+                           (.set (ssl/ssl-context key cert ca-cert)))
+                       (-> .cacheDns (.set cache-dns?))))
 
                    ; Standard client
-                   (RiemannClient/tcp host port))]
+                   (doto (RiemannClient/tcp host port)
+                     (-> .transport .cacheDns (.set cache-dns?))))]
 
       ; Attempt to connect lazily.
       (try (connect! client)
@@ -171,9 +175,10 @@
       client)))
 
 (defn ^RiemannClient udp-client
-  "Creates a new UDP client. Can take an optional maximum message size. Example:
+  "Creates a new UDP client. Can take an optional maximum message size, and
+  cache-dns? flag. Example:
   (udp-client)
-  (udp-client {:host \"foo\" :port 5555 :max-size 16384})"
+  (udp-client {:host \"foo\" :port 5555 :max-size 16384 :cache-dns? true})"
   [& opts]
   (let [opts (if (and (= 1 (count opts))
                       (map? (first opts)))
@@ -181,13 +186,16 @@
                (apply hash-map opts))
         {:keys [^String host
                 ^Integer port
-                ^Integer max-size]
+                ^Integer max-size
+                ^Boolean cache-dns?]
          :or {port 5555
               host "localhost"
-              max-size 16384}} opts
+              max-size 16384
+              cache-dns? false}} opts
         c (RiemannClient.
             (doto (UdpTransport. host port)
-              (-> .sendBufferSize (.set max-size))))]
+              (-> .sendBufferSize (.set max-size))
+              (-> .transport .cacheDns (.set cache-dns?))))]
     (try (connect! c)
          (catch IOException e nil))
     c))
