@@ -12,6 +12,8 @@
 
 (def event-keys (set (map keyword (Event/getBasis))))
 
+(def local-host-name (delay (.. InetAddress getLocalHost getHostName)))
+
 (defn assoc-default
   "Like assoc, but only alters the map if it does not already contain the given
   key.
@@ -92,7 +94,7 @@
   [e]
   (-> e
     (assoc-default :time (/ (System/currentTimeMillis) 1000))
-    (assoc-default :host (.. InetAddress getLocalHost getHostName))
+    (assoc-default :host @local-host-name)
     encode-pb-event))
 
 (defn decode-pb-msg
