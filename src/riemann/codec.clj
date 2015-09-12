@@ -80,10 +80,11 @@
     (when (:time e)         (.setTime         event (long (:time e))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
     (doseq [k (clojure.set/difference (set (keys e)) event-keys)]
-      (let [a (Proto$Attribute/newBuilder)]
-        (.setKey a (name k))
-        (.setValue a (get e k))
-        (.addAttributes event a)))
+      (when-let [v (get e k)]
+        (let [a (Proto$Attribute/newBuilder)]
+          (.setKey a (name k))
+          (.setValue a v)
+          (.addAttributes event a))))
     (.build event)))
 
 (defn encode-client-pb-event
