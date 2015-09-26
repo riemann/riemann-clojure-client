@@ -26,20 +26,23 @@
     (assoc :events (map map->Event (:events m)))
     (map->Msg)))
 
+(defn roundtrip
+  [m]
+  (let [m' (-> m
+               encode-pb-msg
+               decode-pb-msg
+               (assoc :decode-time nil))]
+    ;; Ignore automatically provided times.
+    (->> (:events m')
+         (map (fn [e e']
+                (if (:time e)
+                  e'
+                  (assoc e' :time nil)))
+              (:events m))
+         (assoc m' :events))))
+
 (deftest protobufs
-  (let [roundtrip (fn [m] (let [m' (-> m
-                                       encode-pb-msg
-                                       decode-pb-msg
-                                       (assoc :decode-time nil))]
-                            ; Ignore automatically provided times.
-                            (->> (:events m')
-                                 (map (fn [e e']
-                                        (if (:time e)
-                                          e'
-                                          (assoc e' :time nil)))
-                                      (:events m))
-                                 (assoc m' :events))))]
-           (are [m] (= (msg m) (roundtrip m))
+  (are [m] (= (msg m) (roundtrip m))
                 {}
                 {:ok true}
                 {:ok false}
@@ -89,4 +92,12 @@
                                    :ttl (float 10)}]})]
              ;(time (dotimes [n 10000000]
                      ;(roundtrip m))))))
-             )))
+             ))
+
+(deftest nil-custom-attributes-should-be-removed-during-serialization
+  (let [original {:host "somehost"
+                  :service "someservice"
+                  :empty-attr nil}
+        expected (dissoc original :empty-attr)]
+    (is (= (msg {:events [expected]})
+           (roundtrip {:events [original]})))))
