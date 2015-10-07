@@ -83,7 +83,11 @@
       (when-let [v (get e k)]
         (let [a (Proto$Attribute/newBuilder)]
           (.setKey a (name k))
-          (.setValue a v)
+          (try (.setValue a v)
+               (catch java.lang.ClassCastException cce
+                 (throw (ex-info "Couldn't serialize event"
+                                 {:event e
+                                  :key k}))))
           (.addAttributes event a))))
     (.build event)))
 
