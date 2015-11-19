@@ -80,7 +80,8 @@
                            :key1 "value1"
                            :key2 "value2"
                            :time 12345
-                           :ttl (float 10)}]})
+                           :ttl (float 10)
+                           :my-ns/key3 "value3"}]})
 
            (let [m (msg {:events [{:host "a"
                                    :service "b"
