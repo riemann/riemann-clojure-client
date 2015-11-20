@@ -82,7 +82,7 @@
     (doseq [k (clojure.set/difference (set (keys e)) event-keys)]
       (when-let [v (get e k)]
         (let [a (Proto$Attribute/newBuilder)]
-          (.setKey a (name k))
+          (.setKey a (str (when (namespace k) (str (namespace k) \/)) (name k)))
           (.setValue a v)
           (.addAttributes event a))))
     (.build event)))
