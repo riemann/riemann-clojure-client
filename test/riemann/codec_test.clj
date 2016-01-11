@@ -102,3 +102,24 @@
         expected (dissoc original :empty-attr)]
     (is (= (msg {:events [expected]})
            (roundtrip {:events [original]})))))
+
+(defn not-serializable-event
+  [not-serializable-value]
+  {:host "somehost"
+   :service "someservice"
+   :not-serializable not-serializable-value})
+
+(defn attempt-serialization
+  [value]
+  (try (roundtrip {:events [(not-serializable-event value)]})
+       (catch Throwable t
+         t)))
+
+(deftest attributes-with-non-serializable-values-should-result-in-exception-with-context
+  (are [value]
+    (let [ex (attempt-serialization value)]
+      (and (= (not-serializable-event value) (:event (ex-data ex)))
+           (= :not-serializable (:key (ex-data ex)))))
+    \c
+    {:some :stuff}
+    ["other" :things]))
