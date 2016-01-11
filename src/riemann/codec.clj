@@ -57,8 +57,8 @@
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
     (if (< 0 (.getAttributesCount e))
-      (into event (map (fn [^Proto$Attribute a] 
-                         [(keyword (.getKey a)) (.getValue a)]) 
+      (into event (map (fn [^Proto$Attribute a]
+                         [(keyword (.getKey a)) (.getValue a)])
                        (.getAttributesList e)))
       event)))
 
@@ -82,7 +82,7 @@
     (doseq [k (clojure.set/difference (set (keys e)) event-keys)]
       (when-let [v (get e k)]
         (let [a (Proto$Attribute/newBuilder)]
-          (.setKey a (name k))
+          (.setKey a (str (when (namespace k) (str (namespace k) \/)) (name k)))
           (try (.setValue a v)
                (catch java.lang.ClassCastException cce
                  (throw (ex-info "Couldn't serialize event"
