@@ -33,8 +33,7 @@
            (java.net InetSocketAddress)
            (java.io IOException))
   (:require [less.awful.ssl :as ssl])
-  (:use riemann.codec)
-  (:use clojure.tools.logging))
+  (:use riemann.codec))
 
 (defn map-promise
   "Maps a riemann client promise by applying a function."
