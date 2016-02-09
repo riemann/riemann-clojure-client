@@ -57,8 +57,8 @@
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
     (if (< 0 (.getAttributesCount e))
-      (into event (map (fn [^Proto$Attribute a] 
-                         [(keyword (.getKey a)) (.getValue a)]) 
+      (into event (map (fn [^Proto$Attribute a]
+                         [(keyword (.getKey a)) (.getValue a)])
                        (.getAttributesList e)))
       event)))
 
@@ -76,7 +76,7 @@
       (if (and (integer? m) (<= Long/MIN_VALUE m Long/MAX_VALUE))
         (.setMetricSint64 event (long m))
         (.setMetricD event (double m))))
-    (when (:tags e)         (.addAllTags      event (:tags e)))
+    (when (:tags e)         (.addAllTags      event (map str (:tags e))))
     (when (:time e)         (.setTime         event (long (:time e))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
     (doseq [k (clojure.set/difference (set (keys e)) event-keys)]
