@@ -57,8 +57,8 @@
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
     (if (< 0 (.getAttributesCount e))
-      (into event (map (fn [^Proto$Attribute a] 
-                         [(keyword (.getKey a)) (.getValue a)]) 
+      (into event (map (fn [^Proto$Attribute a]
+                         [(keyword (.getKey a)) (.getValue a)])
                        (.getAttributesList e)))
       event)))
 
@@ -83,7 +83,7 @@
       (when-let [v (get e k)]
         (let [a (Proto$Attribute/newBuilder)]
           (.setKey a (str (when (namespace k) (str (namespace k) \/)) (name k)))
-          (.setValue a v)
+          (.setValue a (str v))
           (.addAttributes event a))))
     (.build event)))
 
