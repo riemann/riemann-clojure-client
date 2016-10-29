@@ -1,6 +1,6 @@
 (ns riemann.client-test
   (:import java.net.InetAddress
-           com.aphyr.riemann.client.OverloadedException)
+           io.riemann.riemann.client.OverloadedException)
   (:use riemann.client
         clojure.test))
 

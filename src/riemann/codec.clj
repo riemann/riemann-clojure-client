@@ -2,7 +2,7 @@
   "Encodes and decodes Riemann messages and events, between byte arrays,
   buffers, and in-memory types."
   (:require clojure.set)
-  (:import [com.aphyr.riemann Proto$Query Proto$Attribute Proto$Event Proto$Msg]
+  (:import [io.riemann.riemann Proto$Query Proto$Attribute Proto$Event Proto$Msg]
            [java.net InetAddress]
            [com.google.protobuf ByteString]))
 
@@ -48,9 +48,11 @@
       (.hasMetricD e)         (.getMetricD e)
       (.hasMetricF e)         (.getMetricF e))
     (when (< 0 (.getTagsCount e)) (vec (.getTagsList e)))
-    (if   (.hasTime e)        (.getTime e)
-                              (/ (double (System/currentTimeMillis))
-                                 1000))
+    (cond
+      (.hasTimeMicros e) (/ (double (.getTimeMicros e)) 1000000) ;; time in us => s
+      (.hasTime e)       (.getTime e) ;; time in s
+      true               (/ (double (System/currentTimeMillis))
+                            1000)) ;; default
     (when (.hasTtl e)         (.getTtl e))))
 
 (defn decode-pb-event
@@ -77,7 +79,8 @@
         (.setMetricSint64 event (long m))
         (.setMetricD event (double m))))
     (when (:tags e)         (.addAllTags      event (:tags e)))
-    (when (:time e)         (.setTime         event (long (:time e))))
+    (when (:time e) (do (.setTimeMicros event (long (* 1000000 (:time e))))
+                        (.setTime       event (long (:time e)))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
     (doseq [k (clojure.set/difference (set (keys e)) event-keys)]
       (when-let [v (get e k)]
