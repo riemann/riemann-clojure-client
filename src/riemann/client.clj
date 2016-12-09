@@ -17,17 +17,17 @@
   Clients are resistant to failure; they will attempt to reconnect a dropped
   connection periodically. Note that clients will not automatically queue or
   retry failed sends."
-  (:import (com.aphyr.riemann.client RiemannBatchClient
-                                     RiemannClient
-                                     MapPromise
-                                     IPromise
-                                     Fn2
-                                     Transport
-                                     AsynchronousTransport
-                                     IRiemannClient
-                                     TcpTransport
-                                     UdpTransport
-                                     SSL)
+  (:import (io.riemann.riemann.client RiemannBatchClient
+                                      RiemannClient
+                                      MapPromise
+                                      IPromise
+                                      Fn2
+                                      Transport
+                                      AsynchronousTransport
+                                      IRiemannClient
+                                      TcpTransport
+                                      UdpTransport
+                                      SSL)
            (java.util List)
            (clojure.lang IDeref)
            (java.net InetSocketAddress)

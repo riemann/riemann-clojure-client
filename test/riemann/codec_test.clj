@@ -69,7 +69,7 @@
                            :description "yo"
                            :metric (float 1.8)
                            :tags ["a" "b" "c"]
-                           :time 12345
+                           :time 12345.0
                            :ttl (float 10)}]}
                 ; Custom attributes
                 {:events [{:host "a"
@@ -79,18 +79,34 @@
                            :metric (float 1.8)
                            :key1 "value1"
                            :key2 "value2"
-                           :time 12345
+                           :time 12345.0
                            :ttl (float 10)
                            :my-ns/key3 "value3"}]})
 
-           (let [m (msg {:events [{:host "a"
-                                   :service "b"
-                                   :state "c"
-                                   :description "yo"
-                                   :metric (float 1.8)
-                                   :tags ["a" "b" "c"]
-                                   :time 12345
-                                   :ttl (float 10)}]})]
+  ; Test time
+  (are [map event] (= (decode-pb-event-record (encode-pb-event map)) event)
+    {:host "sup" :time 1} (map->Event {:host "sup" :time 1.0})
+    {:host "sup" :time 100.500} (map->Event {:host "sup" :time 100.500}))
+
+  ; Test encoding
+  (testing "Protobuf encoding"
+    (let [proto-event (encode-pb-event {:host "sup" :time 1})]
+      (is (= (.getHost proto-event) "sup"))
+      (is (= (.getTime proto-event) 1))
+      (is (= (.getTimeMicros proto-event) 1000000)))
+    (let [proto-event (encode-pb-event {:host "sup" :time 100.500})]
+      (is (= (.getHost proto-event) "sup"))
+      (is (= (.getTime proto-event) 100))
+      (is (= (.getTimeMicros proto-event) 100500000))))
+
+  (let [m (msg {:events [{:host "a"
+                          :service "b"
+                          :state "c"
+                          :description "yo"
+                          :metric (float 1.8)
+                          :tags ["a" "b" "c"]
+                          :time 12345
+                          :ttl (float 10)}]})]
              ;(time (dotimes [n 10000000]
                      ;(roundtrip m))))))
              ))
