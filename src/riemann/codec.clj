@@ -12,16 +12,16 @@
 
 (def event-keys (set (map keyword (Event/getBasis))))
 
-(defn assoc-default
+(defmacro assoc-default
   "Like assoc, but only alters the map if it does not already contain the given
   key.
 
   (assoc-default {} :foo 2)         ; {:foo 2}
   (assoc-default {:foo nil} :foo 2) ; {:foo nil}"
   [m k v]
-  (if (contains? m k)
-    m
-    (assoc m k v)))
+  `(if (contains? ~m ~k)
+    ~m
+    (assoc ~m ~k ~v)))
 
 (defn decode-pb-query
   "Transforms a java protobuf Query to a Query."
