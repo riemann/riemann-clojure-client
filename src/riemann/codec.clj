@@ -87,7 +87,7 @@
     (encode-pb-event
      (cond-> e
        (absent? :host) (assoc :host (.. InetAddress getLocalHost getHostName))
-       (absent? :time) (assoc :time (/ (System/currentTimeMillis) 1000))))))
+       (absent? :time) (assoc :time (/ (double (System/currentTimeMillis)) 1000))))))
 
 (defn decode-pb-msg
   "Transforms a java protobuf Msg to a defrecord Msg."
