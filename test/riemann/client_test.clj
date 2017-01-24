@@ -19,13 +19,13 @@
 
 (deftest send-query
   (with-open [c (tcp-client :host "localhost")]
-    (let [e {:service "test" :state "ok"}]
+    (let [e {:service "test" :state "ok" :ttl 10}]
       (send-event c e)
       (let [e1 (first @(query c "service = \"test\" and state = \"ok\""))]
         (is (= (:service e) (:service e1)))
         (is (= (:state e) (:state e1)))
         (is (float? (:ttl e1)))
-        (is (integer? (:time e1)))))))
+        (is (float? (:time e1)))))))
 
 (deftest load-shedding-test
   (with-open [c (tcp-client)]
@@ -52,9 +52,9 @@
 (deftest default-time
   (with-open [c (tcp-client :host "localhost")]
     (testing "undefined time"
-      (let [t1 (quot (System/currentTimeMillis) 1000)
+      (let [t1 (/ (System/currentTimeMillis) 1000)
             _ @(send-event c {:service "test-no-time"})
-            t2 (quot (System/currentTimeMillis) 1000)
+            t2 (/ (System/currentTimeMillis) 1000)
             t  (-> c
                    (query "service = \"test-no-time\"")
                    deref
@@ -72,7 +72,7 @@
 
     (testing "with a given time"
       @(send-event c {:service "test-given-time" :time 1234})
-      (is (= 1234
+      (is (= 1234.0
              (-> c (query "service = \"test-given-time\"")
                  deref
                  first
