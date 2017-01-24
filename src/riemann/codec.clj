@@ -12,17 +12,6 @@
 
 (def event-keys (set (map keyword (Event/getBasis))))
 
-(defn assoc-default
-  "Like assoc, but only alters the map if it does not already contain the given
-  key.
-
-  (assoc-default {} :foo 2)         ; {:foo 2}
-  (assoc-default {:foo nil} :foo 2) ; {:foo nil}"
-  [m k v]
-  (if (contains? m k)
-    m
-    (assoc m k v)))
-
 (defn decode-pb-query
   "Transforms a java protobuf Query to a Query."
   [^Proto$Query q]
@@ -94,10 +83,11 @@
   "Clients usually fill in an event's local host and time automatically, if
   not explicitly specified."
   [e]
-  (-> e
-    (assoc-default :time (/ (System/currentTimeMillis) 1000))
-    (assoc-default :host (.. InetAddress getLocalHost getHostName))
-    encode-pb-event))
+  (let [absent? (-> e keys set complement)]
+    (encode-pb-event
+     (cond-> e
+       (absent? :host) (assoc :host (.. InetAddress getLocalHost getHostName))
+       (absent? :time) (assoc :time (/ (System/currentTimeMillis) 1000))))))
 
 (defn decode-pb-msg
   "Transforms a java protobuf Msg to a defrecord Msg."
