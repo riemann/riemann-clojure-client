@@ -139,13 +139,17 @@
                (first opts)
                (apply hash-map opts))
         {:keys [^String host
+                ^String remote-host
+                ^String local-host
                 ^Integer port
+                ^Integer remote-port
+                ^Integer local-port
                 tls?
                 key
                 cert
                 ca-cert
                 ^Boolean cache-dns?]
-         :or {host "localhost", cache-dns? false}} opts]
+         :or {host "localhost", cache-dns? false, local-port 0}} opts]
 
     ; Check options
     (when tls?
@@ -154,18 +158,22 @@
       (assert ca-cert))
 
     ; Create client
-    (let [port   (or port (if tls? 5554 5555))
+    (let [remote-port   (or remote-port port (if tls? 5554 5555))
           client (if tls?
                    ; TLS client
                    (RiemannClient.
-                     (doto (TcpTransport. host port)
+                     (doto (if-not local-host
+                              (TcpTransport. (or remote-host host) remote-port)
+                              (TcpTransport. (or remote-host host) remote-port local-host local-port))
                        (-> .sslContext
                            ;; (.set (SSL/sslContext key cert ca-cert))
                            (.set (ssl/ssl-context key cert ca-cert)))
                        (-> .cacheDns (.set cache-dns?))))
 
                    ; Standard client
-                   (doto (RiemannClient/tcp host port)
+                   (doto (if-not local-host
+                            (RiemannClient/tcp (or remote-host host) remote-port)
+                            (RiemannClient/tcp (or remote-host host) remote-port local-host local-port))
                      (-> .transport .cacheDns (.set cache-dns?))))]
 
       ; Attempt to connect lazily.
@@ -184,15 +192,22 @@
                (first opts)
                (apply hash-map opts))
         {:keys [^String host
+                ^String remote-host
+                ^String local-host
                 ^Integer port
+                ^Integer remote-port
+                ^Integer local-port
                 ^Integer max-size
                 ^Boolean cache-dns?]
          :or {port 5555
               host "localhost"
               max-size 16384
-              cache-dns? false}} opts
+              cache-dns? false
+              local-port 0}} opts
         c (RiemannClient.
-            (doto (UdpTransport. host port)
+            (doto (if-not local-host
+                      (UdpTransport. (or remote-host host) (or remote-port port))
+                      (UdpTransport. (or remote-host host) (or remote-port port) local-host local-port))
               (-> .sendBufferSize (.set max-size))
               (-> .cacheDns (.set cache-dns?))))]
     (try (connect! c)
