@@ -5,6 +5,8 @@ small wrapper around
 [riemann-java-client](https://github.com/aphyr/riemann-java-client); see its
 documentation for more details.
 
+[![Build Status](https://travis-ci.org/riemann/riemann-clojure-client.svg?branch=master)](https://travis-ci.org/riemann/riemann-clojure-client)
+
 ## Usage
 
 Download from clojars: https://clojars.org/riemann-clojure-client
