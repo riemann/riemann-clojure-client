@@ -9,7 +9,7 @@ documentation for more details.
 
 ## Usage
 
-Download from clojars: https://clojars.org/riemann-clojure-client
+Download from clojars: [![Clojars Project](https://img.shields.io/clojars/v/riemann-clojure-client.svg)](https://clojars.org/riemann-clojure-client)
 
 ``` clojure
 (require '[riemann.client :as r])
