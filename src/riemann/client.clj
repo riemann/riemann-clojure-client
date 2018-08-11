@@ -167,14 +167,13 @@
                               (TcpTransport. (or remote-host host) remote-port local-host local-port))
                        (-> .sslContext
                            ;; (.set (SSL/sslContext key cert ca-cert))
-                           (.set (ssl/ssl-context key cert ca-cert)))
-                       (-> .cacheDns (.set cache-dns?))))
+                           (.set (ssl/ssl-context key cert ca-cert)))))
 
                    ; Standard client
-                   (doto (if-not local-host
-                            (RiemannClient/tcp (or remote-host host) remote-port)
-                            (RiemannClient/tcp (or remote-host host) remote-port local-host local-port))
-                     (-> .transport .cacheDns (.set cache-dns?))))]
+                   (if-not local-host
+                      (RiemannClient/tcp (or remote-host host) remote-port)
+                      (RiemannClient/tcp (or remote-host host) remote-port local-host local-port)))]
+
 
       ; Attempt to connect lazily.
       (try (connect! client)
@@ -208,8 +207,7 @@
             (doto (if-not local-host
                       (UdpTransport. (or remote-host host) (or remote-port port))
                       (UdpTransport. (or remote-host host) (or remote-port port) local-host local-port))
-              (-> .sendBufferSize (.set max-size))
-              (-> .cacheDns (.set cache-dns?))))]
+              (-> .sendBufferSize (.set max-size))))]
     (try (connect! c)
          (catch IOException e nil))
     c))
