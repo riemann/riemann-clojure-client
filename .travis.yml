@@ -11,7 +11,7 @@ before_script:
   - git clone https://github.com/riemann/riemann.git
   - cd riemann
   - lein deps
-  - nohup lein run &
+  - sudo lein run &
   - cd ..
 
 cache:
