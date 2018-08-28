@@ -7,7 +7,7 @@
                  :state \"running\"
                  :metric 2.0
                  :tags [\"joke\"]})
-  => #<com.aphyr.riemann.client.MapPromise ...>
+  => #<com.riemann.riemann.client.MapPromise ...>
 
   @(query c \"tagged \\\"joke\\\"\")
   => [{:service \"fridge\" ... }]
@@ -120,14 +120,14 @@
 (defn ^RiemannClient tcp-client
   "Creates a new TCP client. Options:
 
-  :host       The host to connect to
-  :port       The port to connect to
+  :host         The host to connect to
+  :port         The port to connect to
 
-  :tls?       Whether to use TLS when connecting
-  :key        A PKCS8 key
-  :cert       A PEM certificate
-  :ca-cert    The signing cert for our certificate and the server's
-  :cache-dns? Allow DNS caching? (default: false)
+  :tls?         Whether to use TLS when connecting
+  :key          A PKCS8 key
+  :cert         A PEM certificate
+  :ca-cert      The signing cert for our certificate and the server's
+  :auto-connect Whether to call 'connect!' prior to returning the client
 
   Example:
 
@@ -148,8 +148,8 @@
                 key
                 cert
                 ca-cert
-                ^Boolean cache-dns?]
-         :or {host "localhost", cache-dns? false, local-port 0}} opts]
+                auto-connect]
+         :or {host "localhost", local-port 0, auto-connect true}} opts]
 
     ; Check options
     (when tls?
@@ -167,25 +167,22 @@
                               (TcpTransport. (or remote-host host) remote-port local-host local-port))
                        (-> .sslContext
                            ;; (.set (SSL/sslContext key cert ca-cert))
-                           (.set (ssl/ssl-context key cert ca-cert)))
-                       (-> .cacheDns (.set cache-dns?))))
+                           (.set (ssl/ssl-context key cert ca-cert)))))
 
                    ; Standard client
-                   (doto (if-not local-host
-                            (RiemannClient/tcp (or remote-host host) remote-port)
-                            (RiemannClient/tcp (or remote-host host) remote-port local-host local-port))
-                     (-> .transport .cacheDns (.set cache-dns?))))]
+                   (if-not local-host
+                     (RiemannClient/tcp (or remote-host host) remote-port)
+                     (RiemannClient/tcp (or remote-host host) remote-port local-host local-port)))]
 
       ; Attempt to connect lazily.
-      (try (connect! client)
-           (catch IOException e nil))
+      (when auto-connect (try (connect! client)
+                              (catch IOException _ nil)))
       client)))
 
 (defn ^RiemannClient udp-client
-  "Creates a new UDP client. Can take an optional maximum message size, and
-  cache-dns? flag. Example:
+  "Creates a new UDP client. Can take an optional maximum message size. Example:
   (udp-client)
-  (udp-client {:host \"foo\" :port 5555 :max-size 16384 :cache-dns? true})"
+  (udp-client {:host \"foo\" :port 5555 :max-size 16384})"
   [& opts]
   (let [opts (if (and (= 1 (count opts))
                       (map? (first opts)))
@@ -198,20 +195,19 @@
                 ^Integer remote-port
                 ^Integer local-port
                 ^Integer max-size
-                ^Boolean cache-dns?]
+                auto-connect]
          :or {port 5555
               host "localhost"
               max-size 16384
-              cache-dns? false
-              local-port 0}} opts
+              local-port 0
+              auto-connect true}} opts
         c (RiemannClient.
             (doto (if-not local-host
                       (UdpTransport. (or remote-host host) (or remote-port port))
                       (UdpTransport. (or remote-host host) (or remote-port port) local-host local-port))
-              (-> .sendBufferSize (.set max-size))
-              (-> .cacheDns (.set cache-dns?))))]
-    (try (connect! c)
-         (catch IOException e nil))
+              (-> .sendBufferSize (.set max-size))))]
+    (when auto-connect (try (connect! c)
+                            (catch IOException _ nil)))
     c))
 
 (defn ^IRiemannClient multi-client

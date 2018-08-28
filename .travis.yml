@@ -7,6 +7,10 @@ lein: lein
 jdk:
   - oraclejdk8
 
+before_script:
+  - scripts/run_riemann_server.sh
+  - sleep 30
+
 cache:
   directories:
     - $HOME/.m2

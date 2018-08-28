@@ -28,8 +28,7 @@
         (is (float? (:time e1)))))))
 
 (deftest load-shedding-test
-  (with-open [c (tcp-client)]
-    (close! c)
+  (with-open [c (tcp-client :auto-connect false)]
     (.. c transport (setWriteBufferLimit 2))
     (connect! c)
 
