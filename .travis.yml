@@ -10,8 +10,9 @@ jdk:
 before_script:
   - git clone https://github.com/riemann/riemann.git
   - cd riemann
+  - lein deps
   - nohup lein run &
-  - sleep 30
+  - cd $HOME
 
 cache:
   directories:
