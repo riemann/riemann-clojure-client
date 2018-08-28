@@ -7,6 +7,12 @@ lein: lein
 jdk:
   - oraclejdk8
 
+before_script:
+  - git clone https://github.com/riemann/riemann.git
+  - cd riemann
+  - nohup lein run &
+  - sleep 30
+
 cache:
   directories:
     - $HOME/.m2
