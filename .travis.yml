@@ -7,6 +7,13 @@ lein: lein
 jdk:
   - oraclejdk8
 
+before_script:
+  - git clone https://github.com/riemann/riemann.git
+  - cd riemann
+  - lein deps
+  - nohup lein run &
+  - cd $HOME
+
 cache:
   directories:
     - $HOME/.m2
