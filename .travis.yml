@@ -8,11 +8,8 @@ jdk:
   - oraclejdk8
 
 before_script:
-  - git clone https://github.com/riemann/riemann.git
-  - cd riemann
-  - lein deps
-  - sudo lein run &
-  - cd ..
+  - scripts/run_riemann_server.sh
+  - sleep 30
 
 cache:
   directories:
