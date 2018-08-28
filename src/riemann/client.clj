@@ -120,13 +120,14 @@
 (defn ^RiemannClient tcp-client
   "Creates a new TCP client. Options:
 
-  :host       The host to connect to
-  :port       The port to connect to
+  :host         The host to connect to
+  :port         The port to connect to
 
-  :tls?       Whether to use TLS when connecting
-  :key        A PKCS8 key
-  :cert       A PEM certificate
-  :ca-cert    The signing cert for our certificate and the server's
+  :tls?         Whether to use TLS when connecting
+  :key          A PKCS8 key
+  :cert         A PEM certificate
+  :ca-cert      The signing cert for our certificate and the server's
+  :auto-connect Whether to call 'connect!' prior to returning the client
 
   Example:
 
@@ -146,8 +147,9 @@
                 tls?
                 key
                 cert
-                ca-cert]
-         :or {host "localhost", local-port 0}} opts]
+                ca-cert
+                auto-connect]
+         :or {host "localhost", local-port 0, auto-connect true}} opts]
 
     ; Check options
     (when tls?
@@ -173,8 +175,8 @@
                      (RiemannClient/tcp (or remote-host host) remote-port local-host local-port)))]
 
       ; Attempt to connect lazily.
-      (try (connect! client)
-           (catch IOException e nil))
+      (when auto-connect (try (connect! client)
+                              (catch IOException _ nil)))
       client)))
 
 (defn ^RiemannClient udp-client
@@ -192,18 +194,20 @@
                 ^Integer port
                 ^Integer remote-port
                 ^Integer local-port
-                ^Integer max-size]
+                ^Integer max-size
+                auto-connect]
          :or {port 5555
               host "localhost"
               max-size 16384
-              local-port 0}} opts
+              local-port 0
+              auto-connect true}} opts
         c (RiemannClient.
             (doto (if-not local-host
                       (UdpTransport. (or remote-host host) (or remote-port port))
                       (UdpTransport. (or remote-host host) (or remote-port port) local-host local-port))
               (-> .sendBufferSize (.set max-size))))]
-    (try (connect! c)
-         (catch IOException e nil))
+    (when auto-connect (try (connect! c)
+                            (catch IOException _ nil)))
     c))
 
 (defn ^IRiemannClient multi-client
