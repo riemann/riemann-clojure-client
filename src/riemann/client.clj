@@ -158,7 +158,7 @@
       (assert ca-cert))
 
     ; Create client
-    (let [remote-port   (or remote-port port (if tls? 5554 5555))
+    (let [remote-port (int (or remote-port port (if tls? 5554 5555)))
           client (if tls?
                    ; TLS client
                    (RiemannClient.
