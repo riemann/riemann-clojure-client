@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[less-awful-ssl "1.0.3"]
-                 [io.riemann/riemann-java-client "0.5.0"]]
+                 [io.riemann/riemann-java-client "0.5.1"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]]}
              :bench {:dependencies [[org.clojure/clojure "1.9.0"]
                                     [criterium "0.4.4"]]
