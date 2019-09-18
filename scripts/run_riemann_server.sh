@@ -1,8 +1,6 @@
 #!/bin/bash
 
-git clone https://github.com/riemann/riemann.git
-cd riemann
-lein deps
+wget https://github.com/riemann/riemann/releases/download/0.3.3/riemann-0.3.3-standalone.jar
 
 cat << EOF > ./riemann.config
 ; -*- mode: clojure; -*-
@@ -38,5 +36,5 @@ cat << EOF > ./riemann.config
                       :ttl     3}]}))))
 EOF
 
-nohup lein run -- ./riemann.config &
-cd ..
+java -jar riemann-0.3.3-standalone.jar
+
