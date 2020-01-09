@@ -72,7 +72,7 @@
                         (.setTime       event (long (:time e)))))
     (when (:ttl e)          (.setTtl          event (:ttl e)))
     (doseq [k (clojure.set/difference (set (keys e)) event-keys)]
-      (when-let [v (get e k)]
+      (when-some [v (get e k)]
         (let [a (Proto$Attribute/newBuilder)]
           (.setKey a (str (when (namespace k) (str (namespace k) \/)) (name k)))
           (.setValue a (str v))

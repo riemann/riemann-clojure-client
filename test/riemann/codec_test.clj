@@ -118,3 +118,15 @@
         expected (dissoc original :empty-attr)]
     (is (= (msg {:events [expected]})
            (roundtrip {:events [original]})))))
+
+(deftest false-custom-attributes
+  (let [original {:host "host.1"
+                  :service "service.1"
+                  :nil-attr nil
+                  :false-attr false}
+        expected (-> original
+                     (dissoc :nil-attr)
+                     (assoc :false-attr "false"))]
+    (is (= (msg {:events [expected]})
+           (roundtrip {:events [original]}))
+        "false values should be converted to string and not be removed")))
