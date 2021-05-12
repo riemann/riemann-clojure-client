@@ -44,7 +44,7 @@
                             1000)) ;; default
     (when (.hasTtl e)         (.getTtl e))))
 
-(def blacklisted-attributes #{"host" "service" "state" "description" "tags" "time" "ttl" "metric"})
+(def blacklisted-attributes #{ "tags" "time" "ttl" "metric"})
 
 (defn blacklisted?
   [^Proto$Attribute a]
