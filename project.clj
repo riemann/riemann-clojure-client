@@ -1,10 +1,10 @@
-(defproject riemann-clojure-client "0.5.2-SNAPSHOT"
+(defproject riemann-clojure-client "0.5.2"
   :description "Clojure client for the Riemann monitoring system"
   :url "https://github.com/riemann/riemann-clojure-client"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[less-awful-ssl "1.0.4"]
-                 [io.riemann/riemann-java-client "0.5.1"]]
+                 [io.riemann/riemann-java-client "0.5.2"]]
   :plugins [[test2junit "1.3.3"]]
   :test2junit-output-dir "target/test2junit"
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]]}
