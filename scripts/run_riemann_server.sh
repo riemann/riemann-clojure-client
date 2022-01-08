@@ -1,6 +1,6 @@
 #!/bin/bash
 
-wget https://github.com/riemann/riemann/releases/download/0.3.3/riemann-0.3.3-standalone.jar
+wget https://github.com/riemann/riemann/releases/download/0.3.8/riemann-0.3.8-standalone.jar
 
 cat << EOF > ./riemann.config
 ; -*- mode: clojure; -*-
