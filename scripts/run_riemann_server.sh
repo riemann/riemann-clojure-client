@@ -36,5 +36,5 @@ cat << EOF > ./riemann.config
                       :ttl     3}]}))))
 EOF
 
-java -jar riemann-0.3.3-standalone.jar
+java -jar riemann-0.3.8-standalone.jar
 
