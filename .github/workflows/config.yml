@@ -12,6 +12,15 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      riemann:
+        image: riemannio/riemann:latest
+        ports:
+          - 5555:5555
+          - 5555:5555/udp
+          - 5556:5556
+          - 2003:2003
+
     env:
       JVM_OPTS: -Xmx3200m
       LEIN_ROOT: nbd
@@ -35,8 +44,6 @@ jobs:
         with:
           path: ~/.m2/repository
           key: ${{ matrix.java }}-maven-${{ hashFiles('**/project.clj') }}
-      - name: Run Riemann server
-        run: scripts/run_riemann_server.sh
       - name: Run test2junit
         run: lein test2junit
       - name: Upload Test Results
